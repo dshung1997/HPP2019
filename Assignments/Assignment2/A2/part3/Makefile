@@ -1,5 +1,5 @@
 january: january.c
-	gcc -o january january.c
+	gcc -g -o january january.c
 
 clean:
 	rm -f january
