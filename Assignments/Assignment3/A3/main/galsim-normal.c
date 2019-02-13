@@ -2,27 +2,16 @@
 #include <stdlib.h>
 #include <math.h>
 #include "point.h"
-#include "../graphics/graphics.h"
 
 // use define instead
 const int G = 100;
 const double e0 = 0.001;
 const double delta = 0.00001;
 
-const float circleRadius=0.0025, circleColor=0;
-const int windowWidth=800;
-const float L=1, W=1;
-
 
 void next_time_step(point next_points[], int N);
 void write_points(char* filename, point list_points[], int N);
 void read_points(char* filename, point list_points[], int N);
-
-int test_graphics(char *argv[]);
-
-void execute(point* list_points, int N, int nsteps, char* window_title);
-
-void execute_with_graphics(point* list_points, int N, int nsteps, char* window_title);
 
 int main(int argc, char* argv[])
 {
@@ -43,46 +32,30 @@ int main(int argc, char* argv[])
     char filename[] = "../input_data/ellipse_N_00010.gal";
     int nsteps = atoi(argv[3]);
     // float delta
-    int graphics = atoi(argv[5]);
+    // int graphics = atoi(argv[5]);
 
     point list_points[N];
 
-
-    // make an array of pointer functions
     //-----------------------------------------------------------------
 
     read_points(filename, list_points, N);
 
     //-----------------------------------------------------------------
 
+    for(int n = 0; n < 2; n++)
+    {
+        next_time_step(list_points, N);
 
-
-    // for(int n = 0; n < nsteps; n++)
-    // {
-    //     next_time_step(list_points, N);
-
-    //     printf("----\n");
-    //     for(int i = 0; i < N; i++)
-    //     {
-    //         printf("%d  | ", i);
-    //         print_point(list_points[i]);
-    //     }
-    // }
-
-    // return 0;
-
-
+        printf("----\n");
+        for(int i = 0; i < N; i++)
+        {
+            printf("%d  | ", i);
+            print_point(list_points[i]);
+        }
+    }
 
     //-----------------------------------------------------------------
 
-    if(graphics)
-    {
-        execute_with_graphics(list_points, N, nsteps, argv[0]);
-    }
-    else
-    {
-        execute(list_points, N, nsteps, argv[0]);
-    }
 
     //-----------------------------------------------------------------
 
@@ -195,108 +168,3 @@ void read_points(char* filename, point list_points[], int N)
 
     fclose(f);
 }
-
-void execute(point* list_points, int N, int nsteps, char* window_title)
-{
-    int count_steps = 0;
-
-    while(count_steps < nsteps)
-    {
-        next_time_step(list_points, N);
-
-        count_steps += 1;
-
-        // printf("%d  | ", count_steps);
-        // print_point(list_points[0]);
-
-        printf("----\n");
-        for(int i = 0; i < N; i++)
-        {
-            printf("%d  | ", i);
-            print_point(list_points[i]);
-        }
-    }
-}
-
-void execute_with_graphics(point* list_points, int N, int nsteps, char* window_title)
-{
-
-    InitializeGraphics(window_title, windowWidth, windowWidth);
-    SetCAxes(0,1);
-
-    int count_steps = 0;
-
-    nsteps = 200;
-    while(
-        count_steps < nsteps 
-        && !CheckForQuit()
-    )
-    {
-        ClearScreen();
-        for(int i = 0; i < N; i++)
-        {
-            DrawCircle(list_points[i].px, list_points[i].py, L, W, circleRadius, circleColor);
-        }
-        Refresh();
-        /* Sleep a short while to avoid screen flickering. */
-        usleep(300000);
-        
-        next_time_step(list_points, N);
-        
-        count_steps += 1;
-
-        printf("----\n");
-        for(int i = 0; i < N; i++)
-        {
-            printf("%d  | ", i);
-            print_point(list_points[i]);
-        }
-
-    }
-    
-    FlushDisplay();
-    CloseDisplay();
-}
-
-// int test_graphics(char *argv[]) {
-
-//     void keep_within_box(float* xA, float* yA) {
-//     if(*xA > 1)
-//         *xA = 0;
-//     if(*yA > 1)
-//         *yA = 0;
-//     }
-
-
-//   float L=1, W=1;
-
-//   float xA = 0.45;
-//   float yA = 0.41;
-//   float xB = 0.32;
-//   float yB = 0.56;
-
-//   InitializeGraphics(argv[0],windowWidth,windowWidth);
-//   SetCAxes(0,1);
-
-//   printf("Hit q to quit.\n");
-//   while(!CheckForQuit()) {
-//     /* Move A. */
-//     xA += 0.0012;
-//     yA += 0.0020;
-//     keep_within_box(&xA, &yA);
-//     /* Move B. */
-//     xB += 0.0007;
-//     yB += 0.0018;
-//     keep_within_box(&xB, &yB);
-//     /* Call graphics routines. */
-//     ClearScreen();
-//     DrawCircle(xA, yA, L, W, circleRadius, circleColor);
-//     DrawCircle(xB, yB, L, W, circleRadius, circleColor);
-//     Refresh();
-//     /* Sleep a short while to avoid screen flickering. */
-//     usleep(3000);
-//   }
-//   FlushDisplay();
-//   CloseDisplay();
-//   return 0;
-// }

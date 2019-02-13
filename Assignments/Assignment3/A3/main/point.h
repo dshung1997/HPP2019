@@ -3,14 +3,15 @@
 #include <stdio.h>
 typedef struct point {
     // may use an array instead
-    double p_x;
-    double p_y;
-    double m;
-    double v_x;
-    double v_y;
+    double px;
+    double py;
+    double m ;
+    double vx;
+    double vy;
+    double b;
 } point;
 
-point new_point(double p_x, double p_y, double m, double v_x, double v_y);
+point new_point(double px, double py, double m, double vx, double vy, double b);
 void print_point(point p);
 
 #endif

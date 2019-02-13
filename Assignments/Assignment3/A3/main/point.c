@@ -1,18 +1,20 @@
 #include "point.h"
 
-point new_point(double p_x, double p_y, double m, double v_x, double v_y)
+point new_point(double px, double py, double m, double vx, double vy, double b)
 {
     point t;
-    t.p_x = p_x;
-    t.p_y = p_y;
+    t.px = px;
+    t.py = py;
     t.m = m;
-    t.v_x = v_x;
-    t.v_y = v_y;
+    t.vx = vx;
+    t.vy = vy;
+    t.b = b;
 
     return t;
 }
 
 void print_point(point p)
 {
-    printf("%lf    %lf    %lf    %lf    %lf\n", p.p_x, p.p_y, p.m, p.v_x, p.v_y);
+    printf("%lf    %lf    %lf    %lf    %lf    %lf\n", p.px, p.py, p.m, p.vx, p.vy, p.b);
+    // printf("%lf    %lf    %lf    %lf\n", p.px, p.py, p.vx, p.vy);
 }
