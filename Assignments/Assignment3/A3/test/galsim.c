@@ -2,16 +2,30 @@
 #include <stdlib.h>
 #include <math.h>
 #include "point.h"
+#include "../graphics/graphics.h"
 
 // use define instead
-const int G = 100;
+const double G = 100.0;
 const double e0 = 0.001;
 const double delta = 0.00001;
 
+const float circleRadius=0.0025, circleColor=0;
+const int windowWidth=800;
+const float L=1, W=1;
+
+//-----------------------------------------------------------------
 
 void next_time_step(point next_points[], int N);
+
 void write_points(char* filename, point list_points[], int N);
+
 void read_points(char* filename, point list_points[], int N);
+
+void execute(point* list_points, int N, int nsteps, char* window_title);
+
+void execute_with_graphics(point* list_points, int N, int nsteps, char* window_title);
+
+//-----------------------------------------------------------------
 
 int main(int argc, char* argv[])
 {
@@ -20,46 +34,44 @@ int main(int argc, char* argv[])
 
     //-----------------------------------------------------------------
 
-    if(argc != 6)
-    {
-        printf("Wrong syntax.\n./galsim N filname nsteps delta_t graphics\n");
-        return -1;
-    }
+    // if(argc != 6)
+    // {
+    //     printf("Wrong syntax.\n./galsim N filname nsteps delta_t graphics\n");
+    //     return -1;
+    // }
 
     //-----------------------------------------------------------------
 
     int N = atoi(argv[1]);
-    char filename[] = "../input_data/ellipse_N_00010.gal";
+    char* filename = argv[2];
     int nsteps = atoi(argv[3]);
     // float delta
-    // int graphics = atoi(argv[5]);
+    int graphics = atoi(argv[5]);
 
     point list_points[N];
 
+
+    // make an array of pointer functions
     //-----------------------------------------------------------------
 
     read_points(filename, list_points, N);
 
     //-----------------------------------------------------------------
 
-    for(int n = 0; n < 2; n++)
-    {
-        next_time_step(list_points, N);
+    //-----------------------------------------------------------------
 
-        printf("----\n");
-        for(int i = 0; i < N; i++)
-        {
-            printf("%d  | ", i);
-            print_point(list_points[i]);
-        }
+    if(graphics)
+    {
+        execute_with_graphics(list_points, N, nsteps, argv[0]);
+    }
+    else
+    {
+        execute(list_points, N, nsteps, argv[0]);
     }
 
     //-----------------------------------------------------------------
 
-
-    //-----------------------------------------------------------------
-
-    write_points("ellipse_N_00010_after200steps.gal", list_points, N);
+    write_points(argv[6], list_points, N);
 
 
     return 0;
@@ -73,6 +85,11 @@ void next_time_step(point next_points[], int N)
     for(int i = 0; i < N; i++)
     {
         prev_points[i] = next_points[i];
+    }
+
+    for(int i = 0; i < N; i++)
+    {
+        // prev_points[i] = next_points[i];
 
         double fx = 0.0, fy = 0.0;
 
@@ -81,20 +98,20 @@ void next_time_step(point next_points[], int N)
             if(i == j) 
                 continue;
 
-            double r_x = prev_points[i].px - prev_points[j].px;
-            double r_y = prev_points[i].py - prev_points[j].py;
+            double rx = prev_points[i].px - prev_points[j].px;
+            double ry = prev_points[i].py - prev_points[j].py;
 
-            double r = sqrt(r_x*r_x + r_y*r_y);
+            double r = sqrt((rx * rx) + (ry * ry));
 
-            double tempx = prev_points[j].m * r_x / ((r + e0)*(r + e0)*(r + e0));
-            double tempy = prev_points[j].m * r_y / ((r + e0)*(r + e0)*(r + e0));
+            // double r1 = (r + e0)*(r + e0)*(r + e0);
+            double r1 = pow((r + e0), 3);
 
-            fx += tempx;
-            fy += tempy;
+            double tempx = prev_points[j].m * rx / (r1);
+            double tempy = prev_points[j].m * ry / (r1);
+
+            fx = fx + tempx;
+            fy = fy + tempy;
         }
-
-        // Fx =  * prev_points[i].m;
-        // Fy =  * prev_points[i].m;
 
         double ax = - fx * G;
         double ay = - fy * G;
@@ -167,4 +184,64 @@ void read_points(char* filename, point list_points[], int N)
     }
 
     fclose(f);
+}
+
+void execute(point* list_points, int N, int nsteps, char* window_title)
+{
+    int count_steps = 0;
+
+    while(count_steps < nsteps)
+    {
+        next_time_step(list_points, N);
+        // print_list_points(list_points, N);
+
+        count_steps += 1;
+
+        // printf("----\n");
+        // for(int i = 0; i < N; i++)
+        // {
+        //     printf("%d  | ", i);
+        //     print_point(list_points[i]);
+        // }
+    }
+}
+
+void execute_with_graphics(point* list_points, int N, int nsteps, char* window_title)
+{
+
+    InitializeGraphics(window_title, windowWidth, windowWidth);
+    SetCAxes(0,1);
+
+    int count_steps = 0;
+
+    while(
+        count_steps < nsteps 
+        && !CheckForQuit()
+    )
+    {
+        ClearScreen();
+        for(int i = 0; i < N; i++)
+        {
+            DrawCircle(list_points[i].px, list_points[i].py, L, W, circleRadius, circleColor);
+        }
+        Refresh();
+        /* Sleep a short while to avoid screen flickering. */
+        usleep(50000);
+        
+        next_time_step(list_points, N);
+        // print_list_points(list_points, N);
+        
+        count_steps += 1;
+
+        // printf("----\n");
+        // for(int i = 0; i < N; i++)
+        // {
+        //     printf("%d  | ", i);
+        //     print_point(list_points[i]);
+        // }
+
+    }
+    
+    FlushDisplay();
+    CloseDisplay();
 }

@@ -1,1 +1,0 @@
-./galsim-normal 10 xx 5 0 1
