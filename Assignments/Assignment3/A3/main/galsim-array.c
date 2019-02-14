@@ -5,7 +5,6 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "point.h"
 #include "graphics.h"
 
 // use define instead
@@ -17,20 +16,22 @@ const float circleRadius=0.0025, circleColor=0;
 const int windowWidth=800;
 const float L=1, W=1;
 
+const int _PX_ = 0;
+const int _PY_ = 1;
+
+const int _VX_ = 2;
+const int _VY_ = 3;
+
+const int _M_ = 4;
+
 //-----------------------------------------------------------------
 
-void next_time_step(point next_points[], int N, double delta);
-
-void write_points(char* filename, point list_points[], int N);
-
-void read_points(char* filename, point list_points[], int N);
-
-void execute(point* list_points, int N, int nsteps, double delta, char* window_title);
-
-void execute_with_graphics(point* list_points, int N, int nsteps, double delta, char* window_title);
-
 void output_filename(char* input, char* output, int nsteps);
-
+void execute_with_graphics(double (*params)[], int N, int nsteps, double delta, char* window_title);
+void execute(double (*params)[], int N, int nsteps, double delta, char* window_title);
+void read_array(char* filename, double (*params)[], double* brightness, int N);
+void write_array(char* filename, double (*params)[], double* brightness, int N);
+void calculate_next(double (*next_params)[], int N, double delta);
 
 double get_wall_seconds(){
     struct timeval tv;
@@ -56,18 +57,23 @@ int main(int argc, char* argv[])
 
     // initialization
     int N = atoi(argv[1]);
+    printf("N : %d\n", N);
     char* filename = argv[2];
     int nsteps = atoi(argv[3]);
     double delta = (double) atof(argv[4]);
     int graphics = atoi(argv[5]);
     G /= (double) N;
-    point list_points[N];
+
+    double params[N][5];
+    double brightness[N];
+
+    
 
     //-----------------------------------------------------------------
 
     // read data
-    read_points(filename, list_points, N);
-
+    read_array(filename, params, brightness, N);
+    
     //-----------------------------------------------------------------
 
     // calculation with and without graphics 
@@ -79,12 +85,12 @@ int main(int argc, char* argv[])
 
     if(graphics)
     {
-        execute_with_graphics(list_points, N, nsteps, delta, argv[0]);
+        execute_with_graphics(params, N, nsteps, delta, argv[0]);
     }
     else
     {
         double t1 = get_wall_seconds();
-        execute(list_points, N, nsteps, delta, argv[0]);
+        execute(params, N, nsteps, delta, argv[0]);
         double t2 = get_wall_seconds();
         printf("---\nExecution time: %lf\n", t2-t1);
     }
@@ -98,30 +104,19 @@ int main(int argc, char* argv[])
     output_filename(filename, output, nsteps);
     printf("---\n%s\n---\n", output);
 
-    write_points(output, list_points, N);
-
-    // print_list_points(list_points, N);
-
-    // point list_points_2[N];
-    // printf("---\n");
-    // read_points("../ref_output_data/circles_N_2_after3steps.gal", list_points_2, 2);
+    write_array(output, params, brightness, N);
 
     return 0;
 }
 
-void next_time_step(point next_points[], int N, double delta)
+void calculate_next(double (*next_params)[5], int N, double delta)
 {
-    point prev_points[N];
+    double prev_params[N][5];
+
+    memcpy(prev_params, next_params, sizeof(prev_params));
 
     for(int i = 0; i < N; i++)
     {
-        prev_points[i] = next_points[i];
-    }
-
-    for(int i = 0; i < N; i++)
-    {
-        // prev_points[i] = next_points[i];
-
         double fx = 0.0, fy = 0.0;
 
         for(int j = 0; j < N; j++)
@@ -129,8 +124,8 @@ void next_time_step(point next_points[], int N, double delta)
             if(i == j) 
                 continue;
 
-            double rx = prev_points[i].px - prev_points[j].px;
-            double ry = prev_points[i].py - prev_points[j].py;
+            double rx = prev_params[i][_PX_] - prev_params[j][_PX_];
+            double ry = prev_params[i][_PY_] - prev_params[j][_PY_];
 
             double r = sqrt((rx * rx) + (ry * ry));
 
@@ -138,8 +133,8 @@ void next_time_step(point next_points[], int N, double delta)
             double r1 = (r + e0) * (r + e0) * (r + e0);
             // pow((r + e0), 3);
 
-            double tempx = prev_points[j].m * rx / r1;
-            double tempy = prev_points[j].m * ry / r1;
+            double tempx = prev_params[j][_M_] * rx / r1;
+            double tempy = prev_params[j][_M_] * ry / r1;
 
             fx = fx + tempx;
             fy = fy + tempy;
@@ -148,27 +143,27 @@ void next_time_step(point next_points[], int N, double delta)
         double ax = - fx * G;
         double ay = - fy * G;
 
-        next_points[i].vx = prev_points[i].vx + delta * ax;
-        next_points[i].vy = prev_points[i].vy + delta * ay;
+        next_params[i][_VX_] = prev_params[i][_VX_] + delta * ax;
+        next_params[i][_VY_] = prev_params[i][_VY_] + delta * ay;
 
-        next_points[i].px = prev_points[i].px + delta * next_points[i].vx;
-        next_points[i].py = prev_points[i].py + delta * next_points[i].vy;
+        next_params[i][_PX_] = prev_params[i][_PX_] + delta * next_params[i][_VX_];
+        next_params[i][_PY_] = prev_params[i][_PY_] + delta * next_params[i][_VY_];
     }
 }
 
-void write_points(char* filename, point list_points[], int N)
+void write_array(char* filename, double (*params)[5], double* brightness, int N)
 {
     FILE* fw = fopen(filename, "wb");
 
     for(int i = 0; i < N; i++)
     {
         double _px, _py, _m, _vx, _vy, _b;
-        _px = list_points[i].px;
-        _py = list_points[i].py;
-        _m = list_points[i].m;
-        _vx = list_points[i].vx;
-        _vy = list_points[i].vy;
-        _b = list_points[i].b;
+        _px = params[i][_PX_];
+        _py = params[i][_PY_];
+        _m = params[i][_M_];
+        _vx = params[i][_VX_];
+        _vy = params[i][_VY_];
+        _b = brightness[i];
         fwrite(&_px, sizeof(double), 1, fw);
         fwrite(&_py, sizeof(double), 1, fw);
         fwrite(&_m, sizeof(double), 1, fw);
@@ -180,56 +175,43 @@ void write_points(char* filename, point list_points[], int N)
     fclose(fw);
 }
 
-void read_points(char* filename, point list_points[], int N)
+void read_array(char* filename, double (*params)[5], double* brightness, int N)
 {
     FILE* f = fopen(filename, "rb");
 
+    
     if(!f)
     {
         printf("Cannot read file: %s.\n", filename);
         return;
     }
-
-    int counter = 0;
-    while(!feof(f))
+    
+    for(int i = 0; i < N; i++)
     {
-        if(counter == N)
-            break;
+        
         // use an array instead
-        double _px, _py, _m, _vx, _vy, _b;
+        double  _b;
 
-        fread(&_px, sizeof(double), 1, f);
-        fread(&_py, sizeof(double), 1, f);
-        fread(&_m, sizeof(double), 1, f);
-        fread(&_vx, sizeof(double), 1, f);
-        fread(&_vy, sizeof(double), 1, f);
+        fread(&params[i], sizeof(double), 5, f);
+              
         fread(&_b, sizeof(double), 1, f);
 
-        point temp = new_point(_px, _py, _m, _vx, _vy, _b);
-
-        list_points[counter] = temp;
-        
-        // printf("%d  | ", counter);
-        // print_point(list_points[counter]);
-
-        counter += 1;
+        brightness[i] = _b; 
     }
-
+    
     fclose(f);
+    
 }
 
-void execute(point* list_points, int N, int nsteps, double delta, char* window_title)
+void execute(double (*params)[5], int N, int nsteps, double delta, char* window_title)
 {
     for(int i = 0; i < nsteps; i++)
     {
-        next_time_step(list_points, N, delta);
-        // printf("---\n");
-        // printf("%d\n", i+1  );
-        // print_list_points(list_points, N);
+        calculate_next(params, N, delta);
     }
 }
 
-void execute_with_graphics(point* list_points, int N, int nsteps, double delta, char* window_title)
+void execute_with_graphics(double (*params)[5], int N, int nsteps, double delta, char* window_title)
 {
 
     InitializeGraphics(window_title, windowWidth, windowWidth);
@@ -245,24 +227,16 @@ void execute_with_graphics(point* list_points, int N, int nsteps, double delta, 
         ClearScreen();
         for(int i = 0; i < N; i++)
         {
-            DrawCircle(list_points[i].px, list_points[i].py, L, W, circleRadius, circleColor);
+            DrawCircle(params[i][_PX_], params[i][_PY_], L, W, circleRadius, circleColor);
         }
         Refresh();
+
         /* Sleep a short while to avoid screen flickering. */
         usleep(5000);
         
-        next_time_step(list_points, N, delta);
-        // print_list_points(list_points, N);
+        calculate_next(params, N, delta);
         
         count_steps += 1;
-
-        // printf("----\n");
-        // for(int i = 0; i < N; i++)
-        // {
-        //     printf("%d  | ", i);
-        //     print_point(list_points[i]);
-        // }
-
     }
     
     FlushDisplay();
