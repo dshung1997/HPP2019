@@ -23,7 +23,6 @@ const int _VX_ = 3;
 const int _VY_ = 4;
 
 
-
 //-----------------------------------------------------------------
 
 void output_filename(char* input, char* output, int nsteps);
@@ -94,8 +93,6 @@ int main(int argc, char* argv[])
         double t2 = get_wall_seconds();
         printf("---\nExecution time: %lf\n", t2-t1);
     }
-
-    
 
     //-----------------------------------------------------------------
 

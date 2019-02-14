@@ -33,3 +33,17 @@ sun_and_planets_N_4.gal
 ellipse_N_00070.gal  
 ellipse_N_00600.gal  
 ellipse_N_05000.gal
+
+
+circles_N_2_after200steps.gal      
+ellipse_N_00500_after200steps.gal
+circles_N_2_after3steps.gal        
+ellipse_N_01000_after200steps.gal
+circles_N_4_after200steps.gal      
+ellipse_N_02000_after200steps.gal
+circles_N_4_after3steps.gal        
+ellipse_N_03000_after100steps.gal
+ellipse_N_00010_after200steps.gal  
+sun_and_planet_N_2_after200steps.gal
+ellipse_N_00100_after200steps.gal  
+sun_and_planet_N_2_after3steps.gal

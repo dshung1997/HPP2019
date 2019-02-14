@@ -249,7 +249,7 @@ void execute_with_graphics(point* list_points, int N, int nsteps, double delta, 
         }
         Refresh();
         /* Sleep a short while to avoid screen flickering. */
-        usleep(5000);
+        usleep(15000);
         
         next_time_step(list_points, N, delta);
         // print_list_points(list_points, N);

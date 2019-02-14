@@ -1,0 +1,24 @@
+N=00010
+NSTEPS=200
+galsim: 0.000248
+galsim-array: 0.000236
+
+N=00100
+NSTEPS=200
+galsim: 0.025931
+galsim-array: 0.025829
+
+N=00500
+NSTEPS=200
+galsim: 0.613420
+galsim-array: 0.623809
+
+N=01000
+NSTEPS=200
+galsim: 2.467121
+galsim-array: 2.588526
+
+N=02000
+NSTEPS=200
+galsim: 9.871787
+galsim-array: 10.230522

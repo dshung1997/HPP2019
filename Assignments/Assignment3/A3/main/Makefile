@@ -1,21 +1,21 @@
-CFLAGS=-Wall
+CFLAGS=-Wall -O3 -funroll-all-loops
 INCLUDES=-I/opt/X11/include
 LDFLAGS=-L/opt/X11/lib -lX11 -lm
 
 # ../input_data/
 
 
-N=01000
+N=00100
 NSTEPS=200
 
 DELTA=0.00001
 GR=0
 
 
-INPUTFILE=../input_data/ellipse_N_$(N).gal 
+INPUTFILE=../input_data/ellipse_N_$(N).gal
 
 OUTPUTPATH=../ref_output_data
-OUTPUTFILE=ellipse_N_$(N)_after$(NSTEPS)steps.gal 
+OUTPUTFILE=ellipse_N_$(N)_after$(NSTEPS)steps.gal
 
 
 galsim: galsim.c galsim.o point.h point.c point.o graphics.o graphics.h graphics.c
