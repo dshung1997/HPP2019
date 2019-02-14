@@ -18,11 +18,11 @@ const float L=1, W=1;
 
 const int _PX_ = 0;
 const int _PY_ = 1;
+const int _M_ = 2;
+const int _VX_ = 3;
+const int _VY_ = 4;
 
-const int _VX_ = 2;
-const int _VY_ = 3;
 
-const int _M_ = 4;
 
 //-----------------------------------------------------------------
 

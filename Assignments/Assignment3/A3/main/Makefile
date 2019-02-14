@@ -5,7 +5,7 @@ LDFLAGS=-L/opt/X11/lib -lX11 -lm
 # ../input_data/
 
 
-N=00010
+N=01000
 NSTEPS=200
 
 DELTA=0.00001
