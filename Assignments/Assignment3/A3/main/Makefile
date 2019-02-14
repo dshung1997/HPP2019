@@ -5,7 +5,7 @@ LDFLAGS=-L/opt/X11/lib -lX11 -lm
 # ../input_data/
 
 
-N=00100
+N=00900
 NSTEPS=200
 
 DELTA=0.00001
@@ -21,7 +21,7 @@ OUTPUTFILE=ellipse_N_$(N)_after$(NSTEPS)steps.gal
 galsim: galsim.c galsim.o point.h point.c point.o graphics.o graphics.h graphics.c
 	gcc -o galsim galsim.o point.o graphics.o $(LDFLAGS)
 	./galsim $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(GR)
-	./compare $(N) $(OUTPUTFILE) $(OUTPUTPATH)/$(OUTPUTFILE)
+	# ./compare $(N) $(OUTPUTFILE) $(OUTPUTPATH)/$(OUTPUTFILE)
 
 galsim.o: galsim.c point.h point.c
 	gcc -c galsim.c $(CFLAGS)
@@ -31,7 +31,7 @@ galsim.o: galsim.c point.h point.c
 galsim-array: galsim-array.c galsim-array.o graphics.o graphics.h graphics.c
 	gcc -o galsim-array galsim-array.o graphics.o $(LDFLAGS)
 	./galsim-array $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(GR)
-	./compare $(N) $(OUTPUTFILE) $(OUTPUTPATH)/$(OUTPUTFILE)
+	# ./compare $(N) $(OUTPUTFILE) $(OUTPUTPATH)/$(OUTPUTFILE)
 
 galsim-array.o: galsim-array.c
 	gcc -c galsim-array.c $(CFLAGS)

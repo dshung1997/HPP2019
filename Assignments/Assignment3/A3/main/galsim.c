@@ -120,8 +120,6 @@ void next_time_step(point next_points[], int N, double delta)
 
     for(int i = 0; i < N; i++)
     {
-        // prev_points[i] = next_points[i];
-
         double fx = 0.0, fy = 0.0;
 
         for(int j = 0; j < N; j++)
@@ -134,9 +132,8 @@ void next_time_step(point next_points[], int N, double delta)
 
             double r = sqrt((rx * rx) + (ry * ry));
 
-            // double r1 = (r + e0)*(r + e0)*(r + e0);
+            // double r1 = pow((r + e0), 3);
             double r1 = (r + e0) * (r + e0) * (r + e0);
-            // pow((r + e0), 3);
 
             double tempx = prev_points[j].m * rx / r1;
             double tempy = prev_points[j].m * ry / r1;
