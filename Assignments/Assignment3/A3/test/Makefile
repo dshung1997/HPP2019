@@ -1,49 +1,76 @@
-CFLAGS=-Wall
+CFLAGS-NONE= -w # -Wall # -O3 -funroll-all-loops
+CFLAGS-FULL= -O3 -funroll-all-loops -w # -Wall
+
 INCLUDES=-I/opt/X11/include
 LDFLAGS=-L/opt/X11/lib -lX11 -lm
-PATHG=../graphics
 
-INPUTFILE=../input_data/circles_N_4.gal
-OUTPUTFILE=circles_N_4_after200steps.gal
-N=4
+# ../input_data/
+
+N=00100
 NSTEPS=200
+
+DELTA=0.00001
 GR=0
 
 
-galsim: galsim.o galsim.c point.o graphics.o
-	gcc -o galsim galsim.o point.o graphics.o $(LDFLAGS)
-	./galsim $(N) $(INPUTFILE) $(NSTEPS) 0 $(GR) $(OUTPUTFILE)
+INPUTFILE=../input_data/ellipse_N_$(N).gal
 
-galsim.o: galsim.c point.h point.c
-	gcc -c galsim.c $(CFLAGS)
+OUTPUTPATH=../ref_output_data
+OUTPUTFILE=ellipse_N_$(N)_after$(NSTEPS)steps.gal
 
 
 
-galsim-100: galsim-100.o galsim-100.c point.o graphics.o
-	gcc -o galsim-100 galsim-100.o point.o graphics.o $(LDFLAGS)
-	./galsim-100 $(N) $(INPUTFILE) $(NSTEPS) 0 $(GR) $(OUTPUTFILE)
-	./../compare_gal_files/compare $(N) $(OUTPUTFILE) ../ref_output_data/$(OUTPUTFILE)
 
-galsim-100.o: galsim-100.c point.h point.c
-	gcc -c galsim-100.c $(CFLAGS)
+# -------------------------------------------------------------------------------------------------------------------------
+galsim-old-none: galsim-old.c galsim-old-none.o point.h point.c point.o graphics.o graphics.h graphics.c
+	gcc -o galsim-old-none galsim-old-none.o point.o graphics.o $(LDFLAGS)
+	./galsim-old-none $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(GR)
+
+galsim-old-none.o: galsim-old.c point.h point.c
+	gcc -c -O galsim-old.c  $(CFLAGS-NONE)
+	mv galsim-old.o galsim-old-none.o
+# ------------------------------------------------------------------------------------------------------------------------- 
+
+
+# -------------------------------------------------------------------------------------------------------------------------
+galsim-old-full: galsim-old.c galsim-old-full.o point.h point.c point.o graphics.o graphics.h graphics.c
+	gcc -o galsim-old-full galsim-old-full.o point.o graphics.o $(LDFLAGS)
+	./galsim-old-full $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(GR)
+
+galsim-old-full.o: galsim-old.c point.h point.c
+	gcc -c -O galsim-old.c  $(CFLAGS-NONE)
+	mv galsim-old.o galsim-old-full.o
+# ------------------------------------------------------------------------------------------------------------------------- 
+
+
+# -------------------------------------------------------------------------------------------------------------------------
+galsim-new-none: galsim-new.c galsim-new-none.o point.h point.c point.o graphics.o graphics.h graphics.c
+	gcc -o galsim-new-none galsim-new-none.o point.o graphics.o $(LDFLAGS)
+	./galsim-new-none $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(GR)
+
+galsim-new-none.o: galsim-new.c point.h point.c
+	gcc -c -O galsim-new.c  $(CFLAGS-NONE)
+	mv galsim-new.o galsim-new-none.o
+# ------------------------------------------------------------------------------------------------------------------------- 
+
+
+# -------------------------------------------------------------------------------------------------------------------------
+galsim-new-full: galsim-new.c galsim-new-full.o point.h point.c point.o graphics.o graphics.h graphics.c
+	gcc -o galsim-new-full galsim-new-full.o point.o graphics.o $(LDFLAGS)
+	./galsim-new-full $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(GR)
+
+galsim-new-full.o: galsim-new.c point.h point.c
+	gcc -c -O galsim-new.c  $(CFLAGS-NONE)
+	mv galsim-new.o galsim-new-full.o
+# ------------------------------------------------------------------------------------------------------------------------- 
+
 
 
 point.o: point.c point.h
 	gcc -c point.c
 
-graphics.o: $(PATHG)/graphics.c $(PATHG)/graphics.h
-	gcc $(INCLUDES) -c $(PATHG)/graphics.c $(CFLAGS) 
-
-compare: galsim
-	gcc -o galsim galsim.o point.o graphics.o $(LDFLAGS)
-	./galsim $(N) $(INPUTFILE) $(NSTEPS) 0 $(GR) $(OUTPUTFILE)
-	./../compare_gal_files/compare $(N) $(OUTPUTFILE) ../ref_output_data/$(OUTPUTFILE)
-
-test: test.o test.c point.o graphics.o
-	gcc -o test test.o point.o graphics.o $(LDFLAGS)
-
-test.o: test.c point.h point.c
-	gcc -c test.c $(CFLAGS)
+graphics.o: graphics.c graphics.h
+	gcc $(INCLUDES) -c graphics.c $(CFLAGS) 
 
 clean:
-	rm -f ./galsim ./test ./a.out *.gal *.o $(OUTPUTFILE) galsim-normal test-struct
+	rm -f galsim galsim-array test a.out *.o *.gal

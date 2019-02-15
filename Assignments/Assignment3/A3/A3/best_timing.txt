@@ -1,0 +1,2 @@
+10.990
+Intel(R) Core(TM) i7-4710HQ CPU @ 2.50GHz

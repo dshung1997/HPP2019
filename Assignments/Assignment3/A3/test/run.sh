@@ -1,1 +1,0 @@
-./galsim 100 ../input_data/ellipse_N_00100.gal 200 0 1 ellipse_N_00100_after200steps.gal
