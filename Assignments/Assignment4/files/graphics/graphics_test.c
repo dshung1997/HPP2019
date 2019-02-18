@@ -45,6 +45,7 @@ int main(int argc, char *argv[]) {
     ClearScreen();
     DrawCircle(xA, yA, L, W, circleRadius, circleColor);
     DrawCircle(xB, yB, L, W, circleRadius, circleColor);
+    DrawRectangle(xA-0.1, yA-0.1, L, W, 0.2, 0.2, circleColor);
     Refresh();
     /* Sleep a short while to avoid screen flickering. */
     usleep(3000);
