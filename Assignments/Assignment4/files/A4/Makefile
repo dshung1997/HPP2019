@@ -5,10 +5,11 @@ LDFLAGS=-L/opt/X11/lib -lX11 -lm
 # ../input_data/
 
 
-N=00900
+N=00010
 NSTEPS=200
 
 DELTA=0.00001
+THETA_MAX=0.86
 GR=0
 
 
@@ -18,28 +19,16 @@ OUTPUTPATH=../ref_output_data
 OUTPUTFILE=ellipse_N_$(N)_after$(NSTEPS)steps.gal
 
 
-galsim: galsim.c galsim.o point.h point.c point.o graphics.o graphics.h graphics.c
-	gcc -o galsim galsim.o point.o graphics.o $(LDFLAGS)
-	./galsim $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(GR)
+galsim: galsim.c galsim.o Quad.h Quad.c Quad.o graphics.o graphics.h graphics.c
+	gcc -o galsim galsim.o Quad.o graphics.o $(LDFLAGS)
+	valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(THETA_MAX) $(GR)
 	# ./compare $(N) $(OUTPUTFILE) $(OUTPUTPATH)/$(OUTPUTFILE)
 
-galsim.o: galsim.c point.h point.c
+galsim.o: galsim.c Quad.h Quad.c
 	gcc -c galsim.c $(CFLAGS)
 
-
-# -------------------------------------------------------------------------------------------------------------------------
-galsim-array: galsim-array.c galsim-array.o graphics.o graphics.h graphics.c
-	gcc -o galsim-array galsim-array.o graphics.o $(LDFLAGS)
-	./galsim-array $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(GR)
-	# ./compare $(N) $(OUTPUTFILE) $(OUTPUTPATH)/$(OUTPUTFILE)
-
-galsim-array.o: galsim-array.c
-	gcc -c galsim-array.c $(CFLAGS)
-# ------------------------------------------------------------------------------------------------------------------------- 
-
-
-point.o: point.c point.h
-	gcc -c point.c
+Quad.o: Quad.c Quad.h
+	gcc -c Quad.c
 
 graphics.o: graphics.c graphics.h
 	gcc $(INCLUDES) -c graphics.c $(CFLAGS) 

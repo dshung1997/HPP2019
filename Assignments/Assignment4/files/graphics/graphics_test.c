@@ -30,17 +30,18 @@ int main(int argc, char *argv[]) {
 
   InitializeGraphics(argv[0],windowWidth,windowWidth);
   SetCAxes(0,1);
+  
 
   printf("Hit q to quit.\n");
   while(!CheckForQuit()) {
-    /* Move A. */
-    xA += 0.0012;
-    yA += 0.0020;
-    keep_within_box(&xA, &yA);
-    /* Move B. */
-    xB += 0.0007;
-    yB += 0.0018;
-    keep_within_box(&xB, &yB);
+    // /* Move A. */
+    // xA += 0.0012;
+    // yA += 0.0020;
+    // keep_within_box(&xA, &yA);
+    // /* Move B. */
+    // xB += 0.0007;
+    // yB += 0.0018;
+    // keep_within_box(&xB, &yB);
     /* Call graphics routines. */
     ClearScreen();
     DrawCircle(xA, yA, L, W, circleRadius, circleColor);

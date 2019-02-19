@@ -5,7 +5,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "point.h"
+#include "Quad.h"
 #include "graphics.h"
 
 // use define instead
@@ -18,16 +18,15 @@ const int windowWidth=800;
 const float L=1, W=1;
 
 //-----------------------------------------------------------------
-
-void next_time_step(point next_points[], int N, double delta);
-
 void write_points(char* filename, point list_points[], int N);
 
 void read_points(char* filename, point list_points[], int N);
 
 void execute(point* list_points, int N, int nsteps, double delta, char* window_title);
 
-void execute_with_graphics(point* list_points, int N, int nsteps, double delta, char* window_title);
+void display(quad* q, point* list_points, int N, int nsteps, double delta, char* window_title);
+void display_quad_rectangle(quad* q);
+
 
 void output_filename(char* input, char* output, int nsteps);
 
@@ -46,7 +45,7 @@ double get_wall_seconds(){
 int main(int argc, char* argv[])
 {
     // check arguments
-    if(argc != 6)
+    if(argc != 7)
     {
         printf("Wrong syntax.\n./galsim N filname nsteps delta_t graphics\n");
         return -1;
@@ -59,8 +58,10 @@ int main(int argc, char* argv[])
     char* filename = argv[2];
     int nsteps = atoi(argv[3]);
     double delta = (double) atof(argv[4]);
-    int graphics = atoi(argv[5]);
+    double theta_max = (double) atof(argv[5]);
+    int graphics = atoi(argv[6]);
     G /= (double) N;
+
     point list_points[N];
 
     //-----------------------------------------------------------------
@@ -70,87 +71,16 @@ int main(int argc, char* argv[])
 
     //-----------------------------------------------------------------
 
-    // calculation with and without graphics 
-    // void (*func_pointer[2])(point*, int, int, double, char*);
-    // func_pointer[0] = &execute;
-    // func_pointer[1] = &execute_with_graphics;
 
-    // (*func_pointer[graphics])(list_points, N, nsteps, delta, argv[0]);
-
-    if(graphics)
-    {
-        execute_with_graphics(list_points, N, nsteps, delta, argv[0]);
-    }
-    else
-    {
-        double t1 = get_wall_seconds();
-        execute(list_points, N, nsteps, delta, argv[0]);
-        double t2 = get_wall_seconds();
-        printf("---\nExecution time: %lf\n", t2-t1);
-    }
-
+    quad* qtree;
     
+    quad_init(&qtree, list_points, N);
+    quad_divide(&qtree);
 
-    //-----------------------------------------------------------------
+    display(qtree, list_points, N, nsteps, delta, argv[0]);
 
-    // write data
-    char output[80] = "";
-    output_filename(filename, output, nsteps);
-    printf("---\n%s\n---\n", output);
-
-    write_points(output, list_points, N);
-
-    // print_list_points(list_points, N);
-
-    // point list_points_2[N];
-    // printf("---\n");
-    // read_points("../ref_output_data/circles_N_2_after3steps.gal", list_points_2, 2);
-
+    quad_free(&qtree);
     return 0;
-}
-
-void next_time_step(point next_points[], int N, double delta)
-{
-    point prev_points[N];
-
-    for(int i = 0; i < N; i++)
-    {
-        prev_points[i] = next_points[i];
-    }
-
-    for(int i = 0; i < N; i++)
-    {
-        double fx = 0.0, fy = 0.0;
-
-        for(int j = 0; j < N; j++)
-        {
-            if(i == j) 
-                continue;
-
-            double rx = prev_points[i].px - prev_points[j].px;
-            double ry = prev_points[i].py - prev_points[j].py;
-
-            double r = sqrt((rx * rx) + (ry * ry));
-
-            double r1 = pow((r + e0), 3);
-            // double r1 = (r + e0) * (r + e0) * (r + e0);
-
-            double tempx = prev_points[j].m * rx / r1;
-            double tempy = prev_points[j].m * ry / r1;
-
-            fx = fx + tempx;
-            fy = fy + tempy;
-        }
-
-        double ax = - fx * G;
-        double ay = - fy * G;
-
-        next_points[i].vx = prev_points[i].vx + delta * ax;
-        next_points[i].vy = prev_points[i].vy + delta * ay;
-
-        next_points[i].px = prev_points[i].px + delta * next_points[i].vx;
-        next_points[i].py = prev_points[i].py + delta * next_points[i].vy;
-    }
 }
 
 void write_points(char* filename, point list_points[], int N)
@@ -202,7 +132,7 @@ void read_points(char* filename, point list_points[], int N)
         fread(&_vy, sizeof(double), 1, f);
         fread(&_b, sizeof(double), 1, f);
 
-        point temp = new_point(_px, _py, _m, _vx, _vy, _b);
+        point temp = point_new(_px, _py, _m, _vx, _vy, _b);
 
         list_points[counter] = temp;
         
@@ -215,28 +145,14 @@ void read_points(char* filename, point list_points[], int N)
     fclose(f);
 }
 
-void execute(point* list_points, int N, int nsteps, double delta, char* window_title)
-{
-    for(int i = 0; i < nsteps; i++)
-    {
-        next_time_step(list_points, N, delta);
-        // printf("---\n");
-        // printf("%d\n", i+1  );
-        // print_list_points(list_points, N);
-    }
-}
-
-void execute_with_graphics(point* list_points, int N, int nsteps, double delta, char* window_title)
+void display(quad* qtree, point* list_points, int N, int nsteps, double delta, char* window_title)
 {
 
     InitializeGraphics(window_title, windowWidth, windowWidth);
     SetCAxes(0,1);
 
-    int count_steps = 0;
-
     while(
-        count_steps < nsteps 
-        && !CheckForQuit()
+        !CheckForQuit()
     )
     {
         ClearScreen();
@@ -244,27 +160,149 @@ void execute_with_graphics(point* list_points, int N, int nsteps, double delta, 
         {
             DrawCircle(list_points[i].px, list_points[i].py, L, W, circleRadius, circleColor);
         }
+
+        display_quad_rectangle(qtree);
+
+
         Refresh();
-        /* Sleep a short while to avoid screen flickering. */
-        usleep(15000);
-        
-        next_time_step(list_points, N, delta);
-        // print_list_points(list_points, N);
-        
-        count_steps += 1;
 
-        // printf("----\n");
-        // for(int i = 0; i < N; i++)
-        // {
-        //     printf("%d  | ", i);
-        //     print_point(list_points[i]);
-        // }
-
+        usleep(3000);
     }
     
     FlushDisplay();
     CloseDisplay();
 }
+
+void display_quad_rectangle(quad* q)
+{
+    if(q == NULL)
+        return;
+
+    double cx = q->cx;
+    double cy = q->cy;
+
+    double half_w = (q->w) / 2.0;
+
+    DrawRectangle(cx-half_w, cy-half_w, L, W, q->w, q->w, circleColor);
+    for(int i = 0; i < 4; i++)
+    {
+        display_quad_rectangle((q->child)[i]);
+    }
+}
+
+void next_time_step(point* next_points, quad* q, int N, double delta, double theta_max)
+{
+    point prev_points[N];
+    for(int i = 0; i < N; i++)
+    {
+        prev_points[i] = next_points[i];
+    }
+
+    for(int i = 0; i < N; i++)
+    {
+        
+    }
+}
+
+// void update_point(point p, quad q, double delta, double theta_max, double* fx, double* fy)
+// {
+//     double w = q->w;    // get the width
+//     double m = q->m;    // get the mass
+//     double cx = q->cx;  // get the position x of the center
+//     double cy = q->cy;  // get the position y of the center
+
+//     double rx = p->px - cx; // get the distance along x axis
+//     double ry = p->py - cy; // get the distance along y axis
+
+//     double r = sqrt((rx * rx) + (ry * ry)); // get the distance between the point and the box's center
+
+//     // theta = width of current box contaning particles / distance from particle to center of box
+//     // theta = w / r
+//     double theta = w / r;
+
+//     if(theta <= theta_max)
+//     {
+//         double r1 = (r + e0) * (r + e0) * (r + e0);
+
+//         double tempx = p->m * rx / r1;
+//         double tempy = p->m * ry / r1;
+
+//         (*fx) = (*fx) + tempx;
+//         (*fy) = (*fy) + tempy;
+
+//         return;
+//     }
+
+//     for(int i = 0; i < 4; i++)
+//     {
+//         update_point(p, quad* q, double delta, double theta_max, double* fx, double* fy)
+//     }
+// }
+
+
+
+// void calculate(point next_points[], int N, double delta)
+// {
+//     point prev_points[N];
+
+//     for(int i = 0; i < N; i++)
+//     {
+//         prev_points[i] = next_points[i];
+//     }
+
+//     for(int i = 0; i < N; i++)
+//     {
+//         double fx = 0.0, fy = 0.0;
+
+//         for(int j = 0; j < N; j++)
+//         {
+//             if(i == j) 
+//                 continue;
+
+//             double rx = prev_points[i].px - prev_points[j].px;
+//             double ry = prev_points[i].py - prev_points[j].py;
+
+//             double r = sqrt((rx * rx) + (ry * ry));
+
+//             double r1 = pow((r + e0), 3);
+//             // double r1 = (r + e0) * (r + e0) * (r + e0);
+
+//             double tempx = prev_points[j].m * rx / r1;
+//             double tempy = prev_points[j].m * ry / r1;
+
+//             fx = fx + tempx;
+//             fy = fy + tempy;
+//         }
+
+//         double ax = - fx * G;
+//         double ay = - fy * G;
+
+//         next_points[i].vx = prev_points[i].vx + delta * ax;
+//         next_points[i].vy = prev_points[i].vy + delta * ay;
+
+//         next_points[i].px = prev_points[i].px + delta * next_points[i].vx;
+//         next_points[i].py = prev_points[i].py + delta * next_points[i].vy;
+//     }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void output_filename(char* input, char* output, int nsteps)
 {
