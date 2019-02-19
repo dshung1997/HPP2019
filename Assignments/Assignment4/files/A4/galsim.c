@@ -27,8 +27,10 @@ void execute(point* list_points, int N, int nsteps, double delta, char* window_t
 void display(quad* q, point* list_points, int N, int nsteps, double delta, char* window_title);
 void display_quad_rectangle(quad* q);
 
-
+void update_point(point p, quad* q, double theta_max, double* fx, double* fy);
 void output_filename(char* input, char* output, int nsteps);
+
+void execute_with_graphics(point* list_points, int N, int nsteps, double delta, double theta_max, char* window_title);
 
 
 double get_wall_seconds(){
@@ -70,16 +72,16 @@ int main(int argc, char* argv[])
     read_points(filename, list_points, N);
 
     //-----------------------------------------------------------------
+    execute_with_graphics(list_points, N, nsteps, delta, theta_max, argv[0]);
+
+ 
+    // char output[80] = "";
+    // output_filename(filename, output, nsteps);
+    // printf("---\n%s\n---\n", output);
+
+    // write_points(output, list_points, N);
 
 
-    quad* qtree;
-    
-    quad_init(&qtree, list_points, N);
-    quad_divide(&qtree);
-
-    display(qtree, list_points, N, nsteps, delta, argv[0]);
-
-    quad_free(&qtree);
     return 0;
 }
 
@@ -200,44 +202,137 @@ void next_time_step(point* next_points, quad* q, int N, double delta, double the
 
     for(int i = 0; i < N; i++)
     {
-        
+        double fx = 0;
+        double fy = 0;
+
+        update_point(prev_points[i], q, theta_max, &fx, &fy);
+
+        double ax = - fx * G;
+        double ay = - fy * G;
+
+        next_points[i].vx = prev_points[i].vx + delta * ax;
+        next_points[i].vy = prev_points[i].vy + delta * ay;
+
+        next_points[i].px = prev_points[i].px + delta * next_points[i].vx;
+        next_points[i].py = prev_points[i].py + delta * next_points[i].vy;
     }
 }
 
-// void update_point(point p, quad q, double delta, double theta_max, double* fx, double* fy)
-// {
-//     double w = q->w;    // get the width
-//     double m = q->m;    // get the mass
-//     double cx = q->cx;  // get the position x of the center
-//     double cy = q->cy;  // get the position y of the center
+void update_point(point p, quad* q, double theta_max, double* fx, double* fy)
+{
+    if(q == NULL)
+        return;
 
-//     double rx = p->px - cx; // get the distance along x axis
-//     double ry = p->py - cy; // get the distance along y axis
+    double w = q->w;    // get the width
+    double m = q->m;    // get the mass
+    double cx = q->cx;  // get the position x of the center
+    double cy = q->cy;  // get the position y of the center
 
-//     double r = sqrt((rx * rx) + (ry * ry)); // get the distance between the point and the box's center
+    double rx = p.px - cx; // get the distance along x axis
+    double ry = p.py - cy; // get the distance along y axis
 
-//     // theta = width of current box contaning particles / distance from particle to center of box
-//     // theta = w / r
-//     double theta = w / r;
+    double r = sqrt((rx * rx) + (ry * ry)); // get the distance between the point and the box's center
 
-//     if(theta <= theta_max)
-//     {
-//         double r1 = (r + e0) * (r + e0) * (r + e0);
+    // theta = width of current box contaning particles / distance from particle to center of box
+    // theta = w / r
+    double theta = w / r;
 
-//         double tempx = p->m * rx / r1;
-//         double tempy = p->m * ry / r1;
+    if(theta <= theta_max)
+    {
+        double r1 = (r + e0) * (r + e0) * (r + e0);
 
-//         (*fx) = (*fx) + tempx;
-//         (*fy) = (*fy) + tempy;
+        double tempx = p.m * rx / r1;
+        double tempy = p.m * ry / r1;
 
-//         return;
-//     }
+        (*fx) = (*fx) + tempx;
+        (*fy) = (*fy) + tempy;
 
-//     for(int i = 0; i < 4; i++)
-//     {
-//         update_point(p, quad* q, double delta, double theta_max, double* fx, double* fy)
-//     }
-// }
+        return;
+    }
+
+    for(int i = 0; i < 4; i++)
+    {
+        update_point(p, q->child[i], theta_max, fx, fy);
+    }
+}
+
+void execute_with_graphics(point* list_points, int N, int nsteps, double delta, double theta_max, char* window_title)
+{
+
+    InitializeGraphics(window_title, windowWidth, windowWidth);
+    SetCAxes(0,1);
+
+    int count_steps = 0;
+
+    quad* qtree;
+
+    while(
+        count_steps < nsteps 
+        && !CheckForQuit()
+    )
+    {
+
+        quad_init(&qtree, list_points, N);
+        quad_divide(&qtree);
+
+        ClearScreen();
+        for(int i = 0; i < N; i++)
+        {
+            DrawCircle(list_points[i].px, list_points[i].py, L, W, circleRadius, circleColor);
+        }
+
+        display_quad_rectangle(qtree);
+        
+        Refresh();
+        /* Sleep a short while to avoid screen flickering. */
+        usleep(150000);
+
+        
+        
+        next_time_step(list_points, qtree, N, delta, theta_max);
+
+        quad_free(&qtree);
+        // print_list_points(list_points, N);
+        
+        count_steps += 1;
+
+        // printf("----\n");
+        // for(int i = 0; i < N; i++)
+        // {
+        //     printf("%d  | ", i);
+        //     print_point(list_points[i]);
+        // }
+
+    }
+    
+    FlushDisplay();
+    CloseDisplay();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
