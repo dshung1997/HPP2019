@@ -40,17 +40,22 @@ void quad_init(quad** q, point* list_points, int num_points)
     {
         (*q) = (quad*) malloc(sizeof(quad));
 
-        (*q)->w = 1.0;
-        (*q)->cx = 0.5;
-        (*q)->cy = 0.5;
-        (*q)->n = num_points;
+        // (*q)->w = 1.0;
+        // (*q)->cx = 0.5;
+        // (*q)->cy = 0.5;
+        // (*q)->n = num_points;
 
+        // (*q)->p = (point**) malloc(num_points * sizeof(point*));
+
+        // for(int i = 0; i < 4; i++)
+        // {
+        //     ((*q)->child)[i] = NULL;
+        // }
+
+        *q = quad_new(1.0, 0.5, 0.5);
+        (*q)->n = num_points;
         (*q)->p = (point**) malloc(num_points * sizeof(point*));
 
-        for(int i = 0; i < 4; i++)
-        {
-            ((*q)->child)[i] = NULL;
-        }
     }
 
     double total_mass = 0.0;
@@ -66,13 +71,16 @@ void quad_init(quad** q, point* list_points, int num_points)
 
 quad* quad_new(double w, double cy, double cx)
 {
-    quad* q;
+    quad* q = NULL;
     q = (quad*) malloc(sizeof(quad));
 
     q->w = w;
     q->cx = cx;
     q->cy = cy;
-    q->n = 0;
+
+    // use memset instead
+    q->n = 0; // number of points
+    // q->info[1] = 0; // has been divided or not
 
     q->p = NULL;
 
@@ -132,7 +140,7 @@ void quad_divide(quad** q)
 {
     if((*q)->n > 1)
     {
-
+        // (*q)->info[1] = 1;
         double half_w = (*q)->w / 2.0;
         double cy = (*q)->cy;
         double cx = (*q)->cx;

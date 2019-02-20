@@ -22,7 +22,7 @@ void write_points(char* filename, point list_points[], int N);
 
 void read_points(char* filename, point list_points[], int N);
 
-void execute(point* list_points, int N, int nsteps, double delta, char* window_title);
+void execute(point* list_points, int N, int nsteps, double delta, double theta_max, char* window_title);
 
 void display(quad* q, point* list_points, int N, int nsteps, double delta, char* window_title);
 void display_quad_rectangle(quad* q);
@@ -68,18 +68,44 @@ int main(int argc, char* argv[])
 
     //-----------------------------------------------------------------
 
+    FILE* test_file = fopen(filename, "rb");
+    if(test_file == NULL)
+    {
+        printf("Cannot read the file !\n");
+        return -1;  
+    }
+    fclose(test_file);
+    
     // read data
     read_points(filename, list_points, N);
 
     //-----------------------------------------------------------------
-    execute_with_graphics(list_points, N, nsteps, delta, theta_max, argv[0]);
+    
+    if(graphics)
+    {
+        execute_with_graphics(list_points, N, nsteps, delta, theta_max, argv[0]);
+    }
+    else
+        execute(list_points, N, nsteps, delta, theta_max, argv[0]);
+
+    // quad* qtree = NULL;
+
+    // for(int i = 0; i < nsteps; i++)
+    // {
+    //     quad_init(&qtree, list_points, N);
+    //     quad_divide(&qtree);
+
+    //     next_time_step(list_points, qtree, N, delta, theta_max);
+
+    //     quad_free(&qtree);
+    // }
 
  
-    // char output[80] = "";
-    // output_filename(filename, output, nsteps);
-    // printf("---\n%s\n---\n", output);
+    char output[80] = "";
+    output_filename(filename, output, nsteps);
+    printf("---\n%s\n---\n", output);
 
-    // write_points(output, list_points, N);
+    write_points(output, list_points, N);
 
 
     return 0;
@@ -223,6 +249,36 @@ void update_point(point p, quad* q, double theta_max, double* fx, double* fy)
     if(q == NULL)
         return;
 
+    if(q->n == 0)
+    {
+        return;
+    }
+
+    // printf("__%d__\n", __LINE__);
+
+    // has one point and has not been divided
+    if(q->n == 1)
+    {
+        // printf("n==1\n");
+        double cx = ((q->p)[0])->px;
+        double cy = ((q->p)[0])->py;
+        double rx = p.px - cx;
+        double ry = p.py - cy;
+
+        double r = sqrt((rx * rx) + (ry * ry));
+        
+        double r1 = (r + e0) * (r + e0) * (r + e0);
+
+        double tempx = p.m * rx / r1;
+        double tempy = p.m * ry / r1;
+
+        (*fx) = (*fx) + tempx;
+        (*fy) = (*fy) + tempy;
+        
+        return;
+    }
+
+
     double w = q->w;    // get the width
     double m = q->m;    // get the mass
     double cx = q->cx;  // get the position x of the center
@@ -237,6 +293,7 @@ void update_point(point p, quad* q, double theta_max, double* fx, double* fy)
     // theta = w / r
     double theta = w / r;
 
+
     if(theta <= theta_max)
     {
         double r1 = (r + e0) * (r + e0) * (r + e0);
@@ -246,7 +303,7 @@ void update_point(point p, quad* q, double theta_max, double* fx, double* fy)
 
         (*fx) = (*fx) + tempx;
         (*fy) = (*fy) + tempy;
-
+        
         return;
     }
 
@@ -264,7 +321,7 @@ void execute_with_graphics(point* list_points, int N, int nsteps, double delta, 
 
     int count_steps = 0;
 
-    quad* qtree;
+    quad* qtree = NULL;
 
     while(
         count_steps < nsteps 
@@ -285,7 +342,7 @@ void execute_with_graphics(point* list_points, int N, int nsteps, double delta, 
         
         Refresh();
         /* Sleep a short while to avoid screen flickering. */
-        usleep(150000);
+        usleep(500000);
 
         
         
@@ -307,6 +364,21 @@ void execute_with_graphics(point* list_points, int N, int nsteps, double delta, 
     
     FlushDisplay();
     CloseDisplay();
+}
+
+void execute(point* list_points, int N, int nsteps, double delta, double theta_max, char* window_title)
+{
+    quad* qtree = NULL;
+
+    for(int i = 0; i < nsteps; i++)
+    {
+        quad_init(&qtree, list_points, N);
+        quad_divide(&qtree);
+
+        next_time_step(list_points, qtree, N, delta, theta_max);
+
+        quad_free(&qtree);
+    }
 }
 
 

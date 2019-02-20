@@ -19,12 +19,15 @@ typedef struct quad quad;
 struct quad {
     point** p;   // an array of (point *)
 
+    // int info[2];    // 0: number of points
+    //                 // 1: is divided or not
+
+    int n;
+
     double m;   // mass
     double w;   // width of the square
     double cx;  // position x of the center of the square
     double cy;  // position y of the center of the square
-
-    int n;      // number of points
 
     quad *child[4];
 

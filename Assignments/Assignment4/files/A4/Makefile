@@ -5,11 +5,11 @@ LDFLAGS=-L/opt/X11/lib -lX11 -lm
 # ../input_data/
 
 
-N=00010
-NSTEPS=200
+N=03000
+NSTEPS=100
 
 DELTA=0.00001
-THETA_MAX=0.86
+THETA_MAX=0.1
 GR=0
 
 
@@ -19,10 +19,19 @@ OUTPUTPATH=../ref_output_data
 OUTPUTFILE=ellipse_N_$(N)_after$(NSTEPS)steps.gal
 
 
+# INPUTFILE=../input_data/circles_N_$(N).gal
+
+# OUTPUTPATH=../ref_output_data
+# OUTPUTFILE=circles_N_$(N)_after$(NSTEPS)steps.gal
+
+
 galsim: galsim.c galsim.o Quad.h Quad.c Quad.o graphics.o graphics.h graphics.c
 	gcc -o galsim galsim.o Quad.o graphics.o $(LDFLAGS)
-	valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(THETA_MAX) $(GR)
-	# ./compare $(N) $(OUTPUTFILE) $(OUTPUTPATH)/$(OUTPUTFILE)
+	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(THETA_MAX) 1
+
+	time ./galsim $(N) $(INPUTFILE) $(NSTEPS) $(DELTA) $(THETA_MAX) $(GR)
+	
+	./compare $(N) $(OUTPUTFILE) $(OUTPUTPATH)/$(OUTPUTFILE)
 
 galsim.o: galsim.c Quad.h Quad.c
 	gcc -c galsim.c $(CFLAGS)

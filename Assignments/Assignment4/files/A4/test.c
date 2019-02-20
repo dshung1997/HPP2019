@@ -24,6 +24,12 @@ typedef struct point {
     int y;
 } point;
 
+typedef struct xx {
+    double x;
+    int y[2];
+    double z;
+} xx;
+
 int main()
 {
     int a = 5;
@@ -36,6 +42,8 @@ int main()
     printf("%d\n", b & 1);
 
     printf("%lf\n", d);
+
+    printf("%lu\n", sizeof(xx));
 
     return 0;
 }
