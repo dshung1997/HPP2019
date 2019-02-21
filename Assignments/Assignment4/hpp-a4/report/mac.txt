@@ -1,0 +1,4 @@
+-O3 3.91
+-O2 3.94
+no flag 8.34
+-O3 -march=native -ffast-math 3.93
