@@ -34,151 +34,184 @@ void point_print_list(point* list_points, int N)
 
 //-------------------------QUADTREE------------------------------------------------------------
 
-void quad_init(quad** q, point* list_points, int num_points)
+void quad_insert(quad** qt, point* p, double _w, double _cx, double _cy)
 {
-    if((*q) == NULL)
+    if(*qt == NULL)
     {
-        (*q) = (quad*) malloc(sizeof(quad));
+        *qt = quad_new(_w, _cx, _cy);
+        (*qt)->p = p;
+        // (*qt)->n += 1;
 
-        // (*q)->w = 1.0;
-        // (*q)->cx = 0.5;
-        // (*q)->cy = 0.5;
-        // (*q)->n = num_points;
-
-        // (*q)->p = (point**) malloc(num_points * sizeof(point*));
-
-        // for(int i = 0; i < 4; i++)
-        // {
-        //     ((*q)->child)[i] = NULL;
-        // }
-
-        *q = quad_new(1.0, 0.5, 0.5);
-        (*q)->n = num_points;
-        (*q)->p = (point**) malloc(num_points * sizeof(point*));
-
+        return;
     }
 
-    double total_mass = 0.0;
-
-    for(int i = 0; i < num_points; i++)
+    double half_w = (*qt)->w / 2.0;
+  
+    if((*qt)->p != NULL)
     {
-        total_mass += list_points[i].m;
-        ((*q)->p)[i] = &list_points[i];
+         point* current_p = (*qt)->p;
+        (*qt)->p = NULL; // remove the current point of the quad and insert it in its corresponding children
+
+        int index_current_p = quad_get_index(*qt, current_p);
+
+        int iy = index_current_p >> 1;
+        int ix = index_current_p & 1;
+            
+        double new_cx = (*qt)->cx - half_w / 2.0 + ix * half_w;
+        double new_cy = (*qt)->cy - half_w / 2.0 + iy * half_w;
+
+        quad_insert(&(((*qt)->child)[index_current_p]), current_p, half_w, new_cx, new_cy);
     }
 
-    (*q)->m = total_mass;
+    int index_p = quad_get_index(*qt, p);
+
+    int iy = index_p >> 1;
+    int ix = index_p & 1;
+        
+    double new_cx = (*qt)->cx - half_w / 2.0 + ix * half_w;
+    double new_cy = (*qt)->cy - half_w / 2.0 + iy * half_w;    
+
+    quad_insert(&(((*qt)->child)[index_p]), p, half_w, new_cx, new_cy);
+
+    // (*qt)->n += 1;
+
+    return;
 }
 
-quad* quad_new(double w, double cy, double cx)
+void quad_mass(quad** qt)
 {
-    quad* q = NULL;
-    q = (quad*) malloc(sizeof(quad));
+    if(*qt == NULL)
+        return;
 
-    q->w = w;
-    q->cx = cx;
-    q->cy = cy;
+    // use array 0-1
+    if((*qt)->p != NULL)
+    {
+        (*qt)->m = (*qt)->p->m;
+        (*qt)->mass_x = (*qt)->p->m * (*qt)->p->px;
+        (*qt)->mass_y = (*qt)->p->m * (*qt)->p->py;
 
-    // use memset instead
-    q->n = 0; // number of points
-    // q->info[1] = 0; // has been divided or not
+        return;
+    }
 
-    q->p = NULL;
-
-    // q->tlquad = NULL;
-    // q->trquad = NULL;
-    // q->blquad = NULL;
-    // q->brquad = NULL;
-
+    // unroll loops
     for(int i = 0; i < 4; i++)
     {
-        (q->child)[i] = NULL;
-    }
+        if(((*qt)->child)[i] != NULL)
+        {
+            quad_mass(&(((*qt)->child)[i]));
 
-    return q;
+            (*qt)->m += (((*qt)->child)[i])->m;
+            (*qt)->mass_x += (((*qt)->child)[i])->mass_x;
+            (*qt)->mass_y += (((*qt)->child)[i])->mass_y;
+        }
+    }
 }
 
-void quad_insert(quad** q, point* p)
+force quad_force(quad* qt, point* p, double theta_max2)
 {
-    (*q)->n += 1;
-    int n = (*q)->n;
+    force f = {0, 0};
 
-    (*q)->p = realloc((*q)->p, n * sizeof(point*));
-    ((*q)->p)[n-1] = p;
+    if(qt == NULL)
+        return f;
 
-    (*q)->m += p->m;
-}   
+    if(qt->p == p)
+        return f;
 
-int quad_get_index(quad* q, point* p)
+    // center of mass - x
+    double cmx = qt->mass_x / qt->m;
+
+    // center of mass - y
+    double cmy = qt->mass_y / qt->m;
+
+    double rij2 = (p->px - cmx) * (p->px - cmx) + (p->py - cmy) * (p->py - cmy);
+
+    // use normal instead of multiply
+    if(qt->p != NULL || (qt->w * qt->w) <= theta_max2 * rij2)
+    {
+        double rij = sqrt(rij2);
+
+        f.fx = qt->m * (p->px - cmx) / ((rij + 0.001) * (rij + 0.001) * (rij + 0.001));
+        f.fy = qt->m * (p->py - cmy) / ((rij + 0.001) * (rij + 0.001) * (rij + 0.001));
+    }
+    else
+    {
+        for(int i = 0; i < 4; i++)
+        {
+            force fc = quad_force((qt->child)[i], p, theta_max2);
+            f.fx += fc.fx;
+            f.fy += fc.fy;
+        }
+    }
+    
+    return f;
+}
+
+quad* quad_new(double w, double cx, double cy)
 {
-    int ix; // index x
-    int iy; // index y
+    quad* qt = (quad*) malloc(sizeof(quad));
 
-    double cx = q->cx;
-    double cy = q->cy;
+    qt->p = NULL;
 
-    double px = p->px;
-    double py = p->py;
+    qt->m = 0;
 
-    double half_w = q->w / 2.0;
+    // qt->n = 0;
+
+    qt->w = w;
+    qt->cx = cx;
+    qt->cy = cy;
+
+    qt->mass_x = 0;
+    qt->mass_y = 0;
 
 
-    if(py <= cy)
-        iy = 0;
-    else
-        iy = 1;
+    // unroll loops
+    for(int i = 0; i < 4; i++)
+    {
+        (qt->child)[i] = NULL;
+    }
 
-    if(px <= cx)
-        ix = 0;
-    else
-        ix = 1;
+    return qt;
+}
+
+
+int quad_get_index(quad* qt, point* p)
+{
+    char ix; // index x
+    char iy; // index y
+
+    // double cx = q->cx;
+    // double cy = q->cy;
+
+    // double px = p->px;
+    // double py = p->py;
+
+    iy = (p->py) > (qt->cy);
+    ix = (p->px) > (qt->cx);
+
+    // if(py <= cy)
+    //     iy = 0;
+    // else
+    //     iy = 1;
+
+    // if(px <= cx)
+    //     ix = 0;
+    // else
+    //     ix = 1;
 
 
     return (iy << 1) + ix;
 }
 
-void quad_divide(quad** q)
-{
-    if((*q)->n > 1)
-    {
-        // (*q)->info[1] = 1;
-        double half_w = (*q)->w / 2.0;
-        double cy = (*q)->cy;
-        double cx = (*q)->cx;
-
-        for(int i = 0; i < 4; i++)
-        {
-            int iy = i >> 1;
-            int ix = i & 1;
-            
-            double new_cy = cy - half_w / 2.0 + iy * half_w;
-            double new_cx = cx - half_w / 2.0 + ix * half_w;
-
-            ((*q)->child)[i] = quad_new(half_w, new_cy, new_cx);
-        }
-
-        int n = (*q)->n;
-
-        for(int i = 0; i < n; i++)
-        {
-            int index = quad_get_index((*q), ((*q)->p)[i]);
-
-            quad_insert(  &(  ((*q)->child)[index]   ), ((*q)->p)[i]     );
-        }
 
 
-        for(int i = 0; i < 4; i++)
-        {
-            quad_divide(    &(  ((*q)->child)[i]   )    );
-        }
-    }
-}
+
+
+
 
 void quad_free(quad** q)
 {
     if((*q) == NULL)
         return;
-
-    free((*q)->p);
 
     for(int i = 0; i < 4; i++)
     {

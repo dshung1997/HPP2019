@@ -30,6 +30,8 @@ typedef struct xx {
     double z;
 } xx;
 
+int quad_get_index(double px, double py, double cx, double cy);
+
 int main()
 {
     int a = 5;
@@ -45,6 +47,51 @@ int main()
 
     printf("%lu\n", sizeof(xx));
 
+
+    char x = 1 < 2;
+    char y = 3 < 4;
+    int z = x * 2 + y;
+    printf("%d %ld %ld\n", z, sizeof(x), sizeof(z));
+
+    printf("%d\n", quad_get_index(0.3, 0.3, 0.5, 0.5));
+    printf("%d\n", quad_get_index(0.8, 0.3, 0.5, 0.5));
+    printf("%d\n", quad_get_index(0.3, 0.8, 0.5, 0.5));
+    printf("%d\n", quad_get_index(0.8, 0.8, 0.5, 0.5));
+
+
+    char m = 3;
+    int mm[] = {0, 1, 2, 3};
+    printf("%d\n", mm[m]);
+
+
     return 0;
 }
 
+
+int quad_get_index(double px, double py, double cx, double cy)
+{
+    char ix; // index x
+    char iy; // index y
+
+    // double cx = q->cx;
+    // double cy = q->cy;
+
+    // double px = p->px;
+    // double py = p->py;
+
+    iy = py > cy;
+    ix = px > cx;
+
+    // if(py <= cy)
+    //     iy = 0;
+    // else
+    //     iy = 1;
+
+    // if(px <= cx)
+    //     ix = 0;
+    // else
+    //     ix = 1;
+
+
+    return (iy << 1) + ix;
+}

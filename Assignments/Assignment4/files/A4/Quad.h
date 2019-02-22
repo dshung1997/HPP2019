@@ -2,6 +2,7 @@
 #define _quad
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 
 //-------------------------STRUCTURE----------------------------------------------------
@@ -14,23 +15,28 @@ typedef struct point {
     double b;
 } point;
 
+typedef struct force {
+    double fx;
+    double fy;
+} force;
+
 
 typedef struct quad quad;
 struct quad {
-    point** p;   // an array of (point *)
-
-    // int info[2];    // 0: number of points
-    //                 // 1: is divided or not
-
-    int n;
+    point* p; 
 
     double m;   // mass
+
+    // long n;     // number of points inside
+
     double w;   // width of the square
     double cx;  // position x of the center of the square
     double cy;  // position y of the center of the square
 
-    quad *child[4];
+    double mass_x; // center of mass in x axis
+    double mass_y; // center of mass in y axis
 
+    quad *child[4];
 };
 //--------------------------------------------------------------------------------------
 
@@ -44,13 +50,12 @@ void point_print(point p);
 void point_print_list(point* list_points, int N);
 
 
-
-void quad_init(quad** q, point* list_points, int num_points);
-quad* quad_new(double w, double cy, double cx);
-void quad_insert(quad** q, point* p);
-int quad_get_index(quad* q, point* p);
-void quad_divide(quad** q);
 void quad_free(quad** q);
+int quad_get_index(quad* qt, point* p);
+quad* quad_new(double w, double cx, double cy);
+force quad_force(quad* qt, point* p, double theta_max2);
+void quad_mass(quad** qt);
+void quad_insert(quad** qt, point* p, double _w, double _cx, double _cy);
 
 
 
