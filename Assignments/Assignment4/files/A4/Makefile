@@ -11,7 +11,7 @@ NSTEPS=200
 
 DELTA=0.00001
 THETA_MAX=0.256
-GR=1
+GR=0
 
 #------------------------------------------------------------------------------------------------------------------
 
@@ -36,6 +36,10 @@ test2000: galsim
 	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
 	./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
 	./compare 02000 ellipse_N_02000_after200steps.gal ../ref_output_data/ellipse_N_02000_after200steps.gal
+
+test5000: galsim
+	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+	./galsim 05000 ../input_data/ellipse_N_05000.gal 100 $(DELTA) $(THETA_MAX) $(GR)
 
 test10: galsim
 	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 00010 ../input_data/ellipse_N_00010.gal 200 $(DELTA) $(THETA_MAX) $(GR)

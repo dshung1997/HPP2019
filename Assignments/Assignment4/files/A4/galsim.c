@@ -24,12 +24,14 @@ void write_points(char* filename, point list_points[], double* velo_x, double* v
 
 void display(quad* qtree, point* list_points, int N, char* window_title);
 void display_quad_rectangle(quad* q);
-void output_filename(char* input, char* output, int nsteps);
+
+void next_time_step(point* list_points, double* velo_x, double* velo_y, int N, double delta, double theta_max);
 
 void execute_with_graphics(point* list_points, double* velo_x, double* velo_y, int N, int nsteps, double delta, double theta_max, char* window_title);
 void execute(point* list_points, double* velo_x, double* velo_y, int N, int nsteps, double delta, double theta_max, char* window_title);
 
-void next_time_step(point* list_points, double* velo_x, double* velo_y, int N, double delta, double theta_max);
+
+void output_filename(char* input, char* output, int nsteps);
 
 double get_wall_seconds(){
     struct timeval tv;
@@ -39,12 +41,11 @@ double get_wall_seconds(){
     return seconds;
 }
 
-
 int main(int argc, char* argv[])
 {
     if(argc != 7)
     {
-        printf("Wrong syntax.\n./galsim N filname nsteps delta_t graphics\n");
+        printf("Wrong syntax.\n./galsim N filename nsteps delta_t theta_max graphics\n");
         return -1;
     }
 
@@ -95,16 +96,11 @@ int main(int argc, char* argv[])
         printf("Execution time: %lf\n", t2-t1);
     }
 
-  
-
-
-
-    char output[80] = "";
-    output_filename(filename, output, nsteps);
-    
+    // char output[80] = "";
+    // output_filename(filename, output, nsteps);
 
     t1 = get_wall_seconds();
-    write_points(output, list_points, velo_x, velo_y, br, N);
+    write_points("result.txt", list_points, velo_x, velo_y, br, N);
     t2 = get_wall_seconds();
     time_all += (t2 - t1);
     printf("Writing time: %lf\n", t2-t1);
@@ -118,7 +114,7 @@ int main(int argc, char* argv[])
 
     printf("Adds up: %lf\n", time_all);
 
-    printf("---\n%s\n---\n", output);
+    // printf("---\n%s\n---\n", output);
 
     return 0;
 }
@@ -136,13 +132,8 @@ void display(quad* qtree, point* list_points, int N, char* window_title)
     )
     {
         ClearScreen();
-        // for(int i = 0; i < N; i++)
-        // {
-        //     DrawCircle(list_points[i].px, list_points[i].py, L, W, circleRadius, circleColor);
-        // }
-
+    
         display_quad_rectangle(qtree);
-
 
         Refresh();
 
@@ -247,8 +238,6 @@ void execute(point* list_points, double* velo_x, double* velo_y, int N, int nste
     }
 }
 
-
-
 void write_points(char* filename, point list_points[], double* velo_x, double* velo_y, double* br, int N)
 {
     FILE* fw = fopen(filename, "wb");
@@ -322,70 +311,6 @@ void read_points(char* filename, point list_points[], double* velo_x, double* ve
 
     fclose(f);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void output_filename(char* input, char* output, int nsteps)
 {
