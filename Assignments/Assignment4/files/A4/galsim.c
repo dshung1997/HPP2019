@@ -19,15 +19,17 @@ const float L=1, W=1;
 char* WINDOW;
 
 
-void write_points(char* filename, point list_points[], int N);
-void read_points(char* filename, point list_points[], int N);
-void execute(point* list_points, int N, int nsteps, double delta, double theta_max, char* window_title);
+void read_points(char* filename, point list_points[], double* velo_x, double* velo_y, double* br, int N);
+void write_points(char* filename, point list_points[], double* velo_x, double* velo_y, double* br, int N);
+
 void display(quad* qtree, point* list_points, int N, char* window_title);
 void display_quad_rectangle(quad* q);
 void output_filename(char* input, char* output, int nsteps);
-void execute_with_graphics(point* list_points, int N, int nsteps, double delta, double theta_max, char* window_title);
-void display_quad_rectangle(quad* q);
-void next_time_step(quad** qtree, point* list_points, int N, double delta, double theta_max);
+
+void execute_with_graphics(point* list_points, double* velo_x, double* velo_y, int N, int nsteps, double delta, double theta_max, char* window_title);
+void execute(point* list_points, double* velo_x, double* velo_y, int N, int nsteps, double delta, double theta_max, char* window_title);
+
+void next_time_step(point* list_points, double* velo_x, double* velo_y, int N, double delta, double theta_max);
 
 double get_wall_seconds(){
     struct timeval tv;
@@ -57,6 +59,9 @@ int main(int argc, char* argv[])
     G /= (double) N;
 
     point list_points[N];
+    double velo_x[N];
+    double velo_y[N];
+    double br[N];
 
    
     FILE* test_file = fopen(filename, "rb");
@@ -67,25 +72,27 @@ int main(int argc, char* argv[])
     }
     fclose(test_file);
     
+    double time_all = 0;
     
-    read_points(filename, list_points, N);
-    
+    double t1 = get_wall_seconds();
+    read_points(filename, list_points, velo_x, velo_y, br, N);
+    double t2 = get_wall_seconds();
 
-
-
-
-
+    time_all += (t2 - t1);
+    printf("---\n");
+    printf("Reading time: %lf\n", t2-t1);
 
     if(graphics)
     {
-        execute_with_graphics(list_points, N, nsteps, delta, theta_max, argv[0]);
+        execute_with_graphics(list_points, velo_x, velo_y, N, nsteps, delta, theta_max, argv[0]);
     }
     else
     {
-        double t1 = get_wall_seconds();
-        execute(list_points, N, nsteps, delta, theta_max, argv[0]);   
-        double t2 = get_wall_seconds();
-        printf("---\nExecution time: %lf\n", t2-t1);
+        t1 = get_wall_seconds();
+        execute(list_points, velo_x, velo_y, N, nsteps, delta, theta_max, argv[0]);   
+        t2 = get_wall_seconds();
+        time_all += (t2 - t1);
+        printf("Execution time: %lf\n", t2-t1);
     }
 
   
@@ -94,10 +101,24 @@ int main(int argc, char* argv[])
 
     char output[80] = "";
     output_filename(filename, output, nsteps);
+    
+
+    t1 = get_wall_seconds();
+    write_points(output, list_points, velo_x, velo_y, br, N);
+    t2 = get_wall_seconds();
+    time_all += (t2 - t1);
+    printf("Writing time: %lf\n", t2-t1);
+
+    printf("---\n");
+
+    if(graphics)
+    {
+        printf("Do not count time for displaying graphics\n");
+    }
+
+    printf("Adds up: %lf\n", time_all);
+
     printf("---\n%s\n---\n", output);
-
-    write_points(output, list_points, N);
-
 
     return 0;
 }
@@ -155,38 +176,38 @@ void display_quad_rectangle(quad* q)
     }
 }
 
-void next_time_step(quad** qtree, point* list_points, int N, double delta, double theta_max)
+void next_time_step(point* list_points, double* velo_x, double* velo_y, int N, double delta, double theta_max)
 {
     force f[N];
-    // quad* qtree = NULL;
-    double theta_max2 = theta_max * theta_max;
+    quad* qtree = NULL;
+    // double theta_max2 = theta_max * theta_max;
 
     for(int i = 0; i < N; i++)
     {
-        quad_insert(qtree, &(list_points[i]), 1, 0.5, 0.5);
-        // display(*qtree, list_points, N, WINDOW);
+        quad_insert(&qtree, &(list_points[i]), 1, 0.5, 0.5);
+        // display(qtree, list_points, N, WINDOW);
     }
 
-    quad_mass(qtree);
+    quad_mass(&qtree);
 
     for(int i = 0; i < N; i++)
     {
-        f[i] = quad_force(*qtree, &(list_points[i]), theta_max2);
+        f[i] = quad_force(qtree, &(list_points[i]), theta_max);
     }
 
     for(int i = 0; i < N; i++)
     {
-        list_points[i].vx += - G * delta * f[i].fx;
-        list_points[i].vy += - G * delta * f[i].fy;
+        velo_x[i] += - G * delta * f[i].fx;
+        velo_y[i] += - G * delta * f[i].fy;
 
-        list_points[i].px += delta * list_points[i].vx;
-        list_points[i].py += delta * list_points[i].vy;
+        list_points[i].px += delta * velo_x[i];
+        list_points[i].py += delta * velo_y[i];
     }
 
-    // quad_free(&qtree);
+    quad_free(&qtree);
 }
 
-void execute_with_graphics(point* list_points, int N, int nsteps, double delta, double theta_max, char* window_title)
+void execute_with_graphics(point* list_points, double* velo_x, double* velo_y, int N, int nsteps, double delta, double theta_max, char* window_title)
 {
 
     InitializeGraphics(window_title, windowWidth, windowWidth);
@@ -199,7 +220,6 @@ void execute_with_graphics(point* list_points, int N, int nsteps, double delta, 
         && !CheckForQuit()
     )
     {
-
         ClearScreen();
         for(int i = 0; i < N; i++)
         {
@@ -208,14 +228,9 @@ void execute_with_graphics(point* list_points, int N, int nsteps, double delta, 
         
         Refresh();
         /* Sleep a short while to avoid screen flickering. */
-        usleep(500000);
+        usleep(5000);
 
-        
-        // next_time_step(list_points, N, delta, theta_max);
-        quad* qtree = NULL;
-        next_time_step(&qtree, list_points, N, delta, theta_max);
-
-        quad_free(&qtree);
+        next_time_step(list_points, velo_x, velo_y, N, delta, theta_max);
         
         count_steps += 1;
     }
@@ -224,24 +239,24 @@ void execute_with_graphics(point* list_points, int N, int nsteps, double delta, 
     CloseDisplay();
 }
 
-void execute(point* list_points, int N, int nsteps, double delta, double theta_max, char* window_title)
+void execute(point* list_points, double* velo_x, double* velo_y, int N, int nsteps, double delta, double theta_max, char* window_title)
 {
     for(int i = 0; i < nsteps; i++)
     {
-        quad* qtree = NULL;
-        next_time_step(&qtree, list_points, N, delta, theta_max);
-
-        // display(qtree, list_points, N, window_title);
-
-        quad_free(&qtree);
+        next_time_step(list_points, velo_x, velo_y, N, delta, theta_max);
     }
 }
 
 
 
-void write_points(char* filename, point list_points[], int N)
+void write_points(char* filename, point list_points[], double* velo_x, double* velo_y, double* br, int N)
 {
     FILE* fw = fopen(filename, "wb");
+    if(fw == NULL)
+    {
+        printf("FW is null !\n");
+        return;
+    }
 
     for(int i = 0; i < N; i++)
     {
@@ -249,21 +264,23 @@ void write_points(char* filename, point list_points[], int N)
         _px = list_points[i].px;
         _py = list_points[i].py;
         _m = list_points[i].m;
-        _vx = list_points[i].vx;
-        _vy = list_points[i].vy;
-        _b = list_points[i].b;
+        _vx = velo_x[i];
+        _vy = velo_y[i];
+        _b = br[i];
         fwrite(&_px, sizeof(double), 1, fw);
         fwrite(&_py, sizeof(double), 1, fw);
         fwrite(&_m, sizeof(double), 1, fw);
         fwrite(&_vx, sizeof(double), 1, fw);
         fwrite(&_vy, sizeof(double), 1, fw);
         fwrite(&_b, sizeof(double), 1, fw);
+
+        // printf("%lf %lf %lf %lf %lf %lf\n", _px, _py, _m, _vx, _vy, _b);
     }
 
     fclose(fw);
 }
 
-void read_points(char* filename, point list_points[], int N)
+void read_points(char* filename, point list_points[], double* velo_x, double* velo_y, double* br, int N)
 {
     FILE* f = fopen(filename, "rb");
 
@@ -288,13 +305,18 @@ void read_points(char* filename, point list_points[], int N)
         fread(&_vy, sizeof(double), 1, f);
         fread(&_b, sizeof(double), 1, f);
 
-        point temp = point_new(_px, _py, _m, _vx, _vy, _b);
+        point temp;
+        temp.px = _px;
+        temp.py = _py;
+        temp.m = _m;
 
         list_points[counter] = temp;
         
-        
-        
+        velo_x[counter] = _vx;
+        velo_y[counter] = _vy;
 
+        br[counter] = _b;
+        
         counter += 1;
     }
 

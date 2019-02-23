@@ -1,37 +1,5 @@
 #include "Quad.h"
 
-
-//-------------------------POINT------------------------------------------------------------
-point point_new(double px, double py, double m, double vx, double vy, double b)
-{
-    point t;
-    t.px = px;
-    t.py = py;
-    t.m = m;
-    t.vx = vx;
-    t.vy = vy;
-    t.b = b;
-
-    return t;
-}
-
-void point_print(point p)
-{
-    printf("%lf    %lf    %lf    %lf    %lf    %lf\n", p.px, p.py, p.m, p.vx, p.vy, p.b);
-    // printf("%lf    %lf    %lf    %lf\n", p.px, p.py, p.vx, p.vy);
-}
-
-void point_print_list(point* list_points, int N)
-{
-    for(int i = 0; i < N; i++)
-    {
-        printf("%d | ", i);
-        point_print(list_points[i]);
-    }
-}
-
-
-
 //-------------------------QUADTREE------------------------------------------------------------
 
 void quad_insert(quad** qt, point* p, double _w, double _cx, double _cy)
@@ -40,7 +8,6 @@ void quad_insert(quad** qt, point* p, double _w, double _cx, double _cy)
     {
         *qt = quad_new(_w, _cx, _cy);
         (*qt)->p = p;
-        // (*qt)->n += 1;
 
         return;
     }
@@ -73,8 +40,6 @@ void quad_insert(quad** qt, point* p, double _w, double _cx, double _cy)
 
     quad_insert(&(((*qt)->child)[index_p]), p, half_w, new_cx, new_cy);
 
-    // (*qt)->n += 1;
-
     return;
 }
 
@@ -87,8 +52,9 @@ void quad_mass(quad** qt)
     if((*qt)->p != NULL)
     {
         (*qt)->m = (*qt)->p->m;
-        (*qt)->mass_x = (*qt)->p->m * (*qt)->p->px;
-        (*qt)->mass_y = (*qt)->p->m * (*qt)->p->py;
+
+        (*qt)->mx = (*qt)->p->px;
+        (*qt)->my = (*qt)->p->py;
 
         return;
     }
@@ -100,14 +66,18 @@ void quad_mass(quad** qt)
         {
             quad_mass(&(((*qt)->child)[i]));
 
+            (*qt)->mx += (((*qt)->child)[i])->mx * (((*qt)->child)[i])->m;
+            (*qt)->my += (((*qt)->child)[i])->my * (((*qt)->child)[i])->m;
+
             (*qt)->m += (((*qt)->child)[i])->m;
-            (*qt)->mass_x += (((*qt)->child)[i])->mass_x;
-            (*qt)->mass_y += (((*qt)->child)[i])->mass_y;
         }
     }
+
+    (*qt)->mx /= (*qt)->m;
+    (*qt)->my /= (*qt)->m;
 }
 
-force quad_force(quad* qt, point* p, double theta_max2)
+force quad_force(quad* qt, point* p, double theta_max)
 {
     force f = {0, 0};
 
@@ -117,32 +87,29 @@ force quad_force(quad* qt, point* p, double theta_max2)
     if(qt->p == p)
         return f;
 
-    // center of mass - x
-    double cmx = qt->mass_x / qt->m;
+    double tempx = p->px - qt->mx;
+    double tempy = p->py - qt->my;
 
-    // center of mass - y
-    double cmy = qt->mass_y / qt->m;
-
-    double rij2 = (p->px - cmx) * (p->px - cmx) + (p->py - cmy) * (p->py - cmy);
+    double rij = sqrt(tempx * tempx + tempy * tempy);
 
     // use normal instead of multiply
-    if(qt->p != NULL || (qt->w * qt->w) <= theta_max2 * rij2)
+    if(qt->p != NULL || qt->w <= theta_max * rij)
     {
-        double rij = sqrt(rij2);
+        double rij_e0_3 = (rij + 0.001) * (rij + 0.001) * (rij + 0.001);
 
-        f.fx = qt->m * (p->px - cmx) / ((rij + 0.001) * (rij + 0.001) * (rij + 0.001));
-        f.fy = qt->m * (p->py - cmy) / ((rij + 0.001) * (rij + 0.001) * (rij + 0.001));
+        f.fx = qt->m * tempx / rij_e0_3;
+        f.fy = qt->m * tempy / rij_e0_3;
+
+        return f;
     }
-    else
+
+    for(int i = 0; i < 4; i++)
     {
-        for(int i = 0; i < 4; i++)
-        {
-            force fc = quad_force((qt->child)[i], p, theta_max2);
-            f.fx += fc.fx;
-            f.fy += fc.fy;
-        }
+        force fc = quad_force((qt->child)[i], p, theta_max);
+        f.fx += fc.fx;
+        f.fy += fc.fy;
     }
-    
+   
     return f;
 }
 
@@ -154,14 +121,12 @@ quad* quad_new(double w, double cx, double cy)
 
     qt->m = 0;
 
-    // qt->n = 0;
-
     qt->w = w;
     qt->cx = cx;
     qt->cy = cy;
 
-    qt->mass_x = 0;
-    qt->mass_y = 0;
+    qt->mx = 0;
+    qt->my = 0;
 
 
     // unroll loops
@@ -173,40 +138,16 @@ quad* quad_new(double w, double cx, double cy)
     return qt;
 }
 
-
 int quad_get_index(quad* qt, point* p)
 {
     char ix; // index x
     char iy; // index y
 
-    // double cx = q->cx;
-    // double cy = q->cy;
-
-    // double px = p->px;
-    // double py = p->py;
-
     iy = (p->py) > (qt->cy);
     ix = (p->px) > (qt->cx);
 
-    // if(py <= cy)
-    //     iy = 0;
-    // else
-    //     iy = 1;
-
-    // if(px <= cx)
-    //     ix = 0;
-    // else
-    //     ix = 1;
-
-
     return (iy << 1) + ix;
 }
-
-
-
-
-
-
 
 void quad_free(quad** q)
 {

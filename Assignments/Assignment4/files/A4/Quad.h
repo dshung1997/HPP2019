@@ -10,9 +10,6 @@ typedef struct point {
     double px;  // position x of the point
     double py;
     double m;
-    double vx;
-    double vy;
-    double b;
 } point;
 
 typedef struct force {
@@ -25,16 +22,13 @@ typedef struct quad quad;
 struct quad {
     point* p; 
 
-    double m;   // mass
-
-    // long n;     // number of points inside
-
     double w;   // width of the square
     double cx;  // position x of the center of the square
     double cy;  // position y of the center of the square
 
-    double mass_x; // center of mass in x axis
-    double mass_y; // center of mass in y axis
+    double m;   // mass
+    double mx; // center of mass in x axis
+    double my; // center of mass in y axis
 
     quad *child[4];
 };
@@ -45,11 +39,6 @@ struct quad {
 
 
 //-------------------------FUNCTIONS----------------------------------------------------
-point point_new(double px, double py, double m, double vx, double vy, double b);
-void point_print(point p);
-void point_print_list(point* list_points, int N);
-
-
 void quad_free(quad** q);
 int quad_get_index(quad* qt, point* p);
 quad* quad_new(double w, double cx, double cy);
