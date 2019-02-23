@@ -26,9 +26,11 @@ struct quad {
     double cx;  // position x of the center of the square
     double cy;  // position y of the center of the square
 
-    double m;   // mass
-    double mx; // center of mass in x axis
-    double my; // center of mass in y axis
+    // double m;   // mass
+    // double mx; // center of mass in x axis
+    // double my; // center of mass in y axis
+
+    point* core;
 
     quad *child[4];
 };

@@ -2,6 +2,35 @@
 
 //-------------------------QUADTREE------------------------------------------------------------
 
+quad* quad_new(double w, double cx, double cy)
+{
+    quad* qt = (quad*) malloc(sizeof(quad));
+
+    qt->p = NULL;
+
+    qt->w = w;
+    qt->cx = cx;
+    qt->cy = cy;
+
+    qt->core = (point*) malloc(sizeof(point));
+    qt->core->m = 0;
+    qt->core->px = 0;
+    qt->core->py = 0;
+
+    // unroll loops
+    // for(int i = 0; i < 4; i++)
+    // {
+    //     (qt->child)[i] = NULL;
+    // }
+
+    (qt->child)[0] = NULL;
+    (qt->child)[1] = NULL;
+    (qt->child)[2] = NULL;
+    (qt->child)[3] = NULL;
+
+    return qt;
+}
+
 void quad_insert(quad** qt, point* p, double _w, double _cx, double _cy)
 {
     if(*qt == NULL)
@@ -51,10 +80,10 @@ void quad_mass(quad** qt)
     // use array 0-1
     if((*qt)->p != NULL)
     {
-        (*qt)->m = (*qt)->p->m;
+        (*qt)->core->m = (*qt)->p->m;
 
-        (*qt)->mx = (*qt)->p->px;
-        (*qt)->my = (*qt)->p->py;
+        (*qt)->core->px = (*qt)->p->px;
+        (*qt)->core->py = (*qt)->p->py;
 
         return;
     }
@@ -66,15 +95,15 @@ void quad_mass(quad** qt)
         {
             quad_mass(&(((*qt)->child)[i]));
 
-            (*qt)->mx += (((*qt)->child)[i])->mx * (((*qt)->child)[i])->m;
-            (*qt)->my += (((*qt)->child)[i])->my * (((*qt)->child)[i])->m;
+            (*qt)->core->px += (((*qt)->child)[i])->core->px * (((*qt)->child)[i])->core->m;
+            (*qt)->core->py += (((*qt)->child)[i])->core->py * (((*qt)->child)[i])->core->m;
 
-            (*qt)->m += (((*qt)->child)[i])->m;
+            (*qt)->core->m += (((*qt)->child)[i])->core->m;
         }
     }
 
-    (*qt)->mx /= (*qt)->m;
-    (*qt)->my /= (*qt)->m;
+    (*qt)->core->px /= (*qt)->core->m;
+    (*qt)->core->py /= (*qt)->core->m;
 }
 
 force quad_force(quad* qt, point* p, double theta_max)
@@ -87,8 +116,8 @@ force quad_force(quad* qt, point* p, double theta_max)
     if(qt->p == p)
         return f;
 
-    double tempx = p->px - qt->mx;
-    double tempy = p->py - qt->my;
+    double tempx = p->px - qt->core->px;
+    double tempy = p->py - qt->core->py;
 
     double rij = sqrt(tempx * tempx + tempy * tempy);
 
@@ -97,8 +126,8 @@ force quad_force(quad* qt, point* p, double theta_max)
     {
         double rij_e0_3 = (rij + 0.001) * (rij + 0.001) * (rij + 0.001);
 
-        f.fx = qt->m * tempx / rij_e0_3;
-        f.fy = qt->m * tempy / rij_e0_3;
+        f.fx = qt->core->m * tempx / rij_e0_3;
+        f.fy = qt->core->m * tempy / rij_e0_3;
 
         return f;
     }
@@ -113,30 +142,6 @@ force quad_force(quad* qt, point* p, double theta_max)
     return f;
 }
 
-quad* quad_new(double w, double cx, double cy)
-{
-    quad* qt = (quad*) malloc(sizeof(quad));
-
-    qt->p = NULL;
-
-    qt->m = 0;
-
-    qt->w = w;
-    qt->cx = cx;
-    qt->cy = cy;
-
-    qt->mx = 0;
-    qt->my = 0;
-
-
-    // unroll loops
-    for(int i = 0; i < 4; i++)
-    {
-        (qt->child)[i] = NULL;
-    }
-
-    return qt;
-}
 
 int quad_get_index(quad* qt, point* p)
 {
@@ -158,6 +163,9 @@ void quad_free(quad** q)
     {
         quad_free(    &(  ((*q)->child)[i]   )    );
     }
+
+    free((*q)->core);
+    (*q)->core = NULL;
 
     free(*q);
     (*q) = NULL;

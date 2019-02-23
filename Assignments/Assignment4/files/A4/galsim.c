@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
     // output_filename(filename, output, nsteps);
 
     t1 = get_wall_seconds();
-    write_points("result.txt", list_points, velo_x, velo_y, br, N);
+    write_points("result.gal", list_points, velo_x, velo_y, br, N);
     t2 = get_wall_seconds();
     time_all += (t2 - t1);
     printf("Writing time: %lf\n", t2-t1);
