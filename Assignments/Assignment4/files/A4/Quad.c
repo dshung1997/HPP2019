@@ -106,7 +106,7 @@ void quad_mass(quad** qt)
     (*qt)->core->py /= (*qt)->core->m;
 }
 
-force quad_force(quad* qt, point* p, double theta_max)
+force quad_force(quad* qt, point* p, double theta_max2)
 {
     force f = {0, 0};
 
@@ -116,25 +116,26 @@ force quad_force(quad* qt, point* p, double theta_max)
     if(qt->p == p)
         return f;
 
-    double tempx = p->px - qt->core->px;
-    double tempy = p->py - qt->core->py;
+    // double tempx = (p->px - qt->core->px);
+    // double tempy = (p->py - qt->core->py);
 
-    double rij = sqrt(tempx * tempx + tempy * tempy);
+    double rij2 = (p->px - qt->core->px) * (p->px - qt->core->px) + (p->py - qt->core->py) * (p->py - qt->core->py);
 
     // use normal instead of multiply
-    if(qt->p != NULL || qt->w <= theta_max * rij)
+    if(qt->p != NULL || qt->w * qt->w <= theta_max2 * rij2)
     {
+        double rij = sqrt(rij2);
         double rij_e0_3 = (rij + 0.001) * (rij + 0.001) * (rij + 0.001);
 
-        f.fx = qt->core->m * tempx / rij_e0_3;
-        f.fy = qt->core->m * tempy / rij_e0_3;
+        f.fx = qt->core->m * (p->px - qt->core->px) / rij_e0_3;
+        f.fy = qt->core->m * (p->py - qt->core->py) / rij_e0_3;
 
         return f;
     }
 
     for(int i = 0; i < 4; i++)
     {
-        force fc = quad_force((qt->child)[i], p, theta_max);
+        force fc = quad_force((qt->child)[i], p, theta_max2);
         f.fx += fc.fx;
         f.fy += fc.fy;
     }

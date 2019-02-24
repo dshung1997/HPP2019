@@ -25,11 +25,10 @@ void write_points(char* filename, point list_points[], double* velo_x, double* v
 void display(quad* qtree, point* list_points, int N, char* window_title);
 void display_quad_rectangle(quad* q);
 
-void next_time_step(point* list_points, double* velo_x, double* velo_y, int N, double delta, double theta_max);
+void next_time_step(point* restrict list_points, double* restrict velo_x, double* restrict velo_y, int N, double delta, double theta_max);
 
-void execute_with_graphics(point* list_points, double* velo_x, double* velo_y, int N, int nsteps, double delta, double theta_max, char* window_title);
-void execute(point* list_points, double* velo_x, double* velo_y, int N, int nsteps, double delta, double theta_max, char* window_title);
-
+void execute_with_graphics(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, char* window_title);
+void execute(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, char* window_title);
 
 void output_filename(char* input, char* output, int nsteps);
 
@@ -167,11 +166,11 @@ void display_quad_rectangle(quad* q)
     }
 }
 
-void next_time_step(point* list_points, double* velo_x, double* velo_y, int N, double delta, double theta_max)
+void next_time_step(point* restrict list_points, double* restrict velo_x, double* restrict velo_y, int N, double delta, double theta_max)
 {
     force f[N];
     quad* qtree = NULL;
-    // double theta_max2 = theta_max * theta_max;
+    double theta_max2 = theta_max * theta_max;
 
     for(int i = 0; i < N; i++)
     {
@@ -183,7 +182,7 @@ void next_time_step(point* list_points, double* velo_x, double* velo_y, int N, d
 
     for(int i = 0; i < N; i++)
     {
-        f[i] = quad_force(qtree, &(list_points[i]), theta_max);
+        f[i] = quad_force(qtree, &(list_points[i]), theta_max2);
     }
 
     for(int i = 0; i < N; i++)
@@ -198,7 +197,7 @@ void next_time_step(point* list_points, double* velo_x, double* velo_y, int N, d
     quad_free(&qtree);
 }
 
-void execute_with_graphics(point* list_points, double* velo_x, double* velo_y, int N, int nsteps, double delta, double theta_max, char* window_title)
+void execute_with_graphics(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, char* window_title)
 {
 
     InitializeGraphics(window_title, windowWidth, windowWidth);
@@ -230,7 +229,7 @@ void execute_with_graphics(point* list_points, double* velo_x, double* velo_y, i
     CloseDisplay();
 }
 
-void execute(point* list_points, double* velo_x, double* velo_y, int N, int nsteps, double delta, double theta_max, char* window_title)
+void execute(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, char* window_title)
 {
     for(int i = 0; i < nsteps; i++)
     {
