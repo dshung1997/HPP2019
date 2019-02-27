@@ -2,12 +2,10 @@ CFLAGS=-Wall
 INCLUDES=-I/opt/X11/include
 LDFLAGS=-L/opt/X11/lib -lX11 -lm
 OPTFLAGS=-Ofast -funroll-loops -march=native # -funroll-loops
-DEBUG=#-g -pg
+DEBUG=-g -pg
 
 
-TYPE=ellipse
-N=02000
-NSTEPS=200
+NTHREADS=4
 
 DELTA=0.00001
 THETA_MAX=0.256
@@ -16,7 +14,7 @@ GR=0
 #------------------------------------------------------------------------------------------------------------------
 
 galsim: galsim.c galsim.o Quad.h Quad.c Quad.o graphics.o graphics.h graphics.c
-	gcc $(DEBUG) -o galsim galsim.o Quad.o graphics.o $(LDFLAGS) $(CFLAGS) $(OPTFLAGS)
+	gcc -pthread $(DEBUG) -o galsim galsim.o Quad.o graphics.o $(LDFLAGS) $(CFLAGS) $(OPTFLAGS)
 
 galsim.o: galsim.c Quad.h Quad.c
 	gcc -c galsim.c $(CFLAGS) $(OPTFLAGS)
@@ -32,10 +30,10 @@ clean:
 
 #------------------------------------------------------------------------------------------------------------------
 
-# test2000: galsim
-# 	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
-# 	./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
-# 	../compare_gal_files/./compare 02000 result.gal ../ref_output_data/ellipse_N_02000_after200steps.gal
+test2000: galsim
+	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+	./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR) $(NTHREADS)
+	../compare_gal_files/./compare 02000 result.gal ../ref_output_data/ellipse_N_02000_after200steps.gal
 
 # test5000: galsim
 # 	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)

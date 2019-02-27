@@ -116,10 +116,10 @@ force quad_force(quad* qt, point* p, double theta_max2)
     if(qt->p == p)
         return f;
 
-    // double tempx = (p->px - qt->core->px);
-    // double tempy = (p->py - qt->core->py);
+    double tempx = (p->px - qt->core->px);
+    double tempy = (p->py - qt->core->py);
 
-    double rij2 = (p->px - qt->core->px) * (p->px - qt->core->px) + (p->py - qt->core->py) * (p->py - qt->core->py);
+    double rij2 = tempx * tempx + tempy * tempy;
 
     // use normal instead of multiply
     if(qt->p != NULL || qt->w * qt->w <= theta_max2 * rij2)
@@ -127,8 +127,8 @@ force quad_force(quad* qt, point* p, double theta_max2)
         double rij = sqrt(rij2);
         double rij_e0_3 = (rij + 0.001) * (rij + 0.001) * (rij + 0.001);
 
-        f.fx = qt->core->m * (p->px - qt->core->px) / rij_e0_3;
-        f.fy = qt->core->m * (p->py - qt->core->py) / rij_e0_3;
+        f.fx = qt->core->m * tempx / rij_e0_3;
+        f.fy = qt->core->m * tempy / rij_e0_3;
 
         return f;
     }
