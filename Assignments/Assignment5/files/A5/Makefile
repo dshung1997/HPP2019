@@ -5,7 +5,7 @@ OPTFLAGS=-Ofast -funroll-loops -march=native # -funroll-loops
 DEBUG=-g -pg
 
 
-NTHREADS=4
+NTHREADS=8
 
 DELTA=0.00001
 THETA_MAX=0.256
@@ -35,9 +35,10 @@ test2000: galsim
 	./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR) $(NTHREADS)
 	../compare_gal_files/./compare 02000 result.gal ../ref_output_data/ellipse_N_02000_after200steps.gal
 
-# test5000: galsim
-# 	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
-# 	./galsim 05000 ../input_data/ellipse_N_05000.gal 100 $(DELTA) $(THETA_MAX) $(GR)
+test3000: galsim
+	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+	./galsim 03000 ../input_data/ellipse_N_03000.gal 100 $(DELTA) $(THETA_MAX) $(GR) $(NTHREADS)
+	../compare_gal_files/./compare 03000 result.gal ../ref_output_data/ellipse_N_03000_after100steps.gal
 
 # test10: galsim
 # 	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 00010 ../input_data/ellipse_N_00010.gal 200 $(DELTA) $(THETA_MAX) $(GR)
@@ -80,5 +81,5 @@ test2000: galsim
 # 	./galsim 3000 ../input_data/ellipse_N_03000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
 # test4000: galsim
 # 	./galsim 4000 ../input_data/ellipse_N_04000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
-# test5000: galsim
-# 	./galsim 5000 ../input_data/ellipse_N_05000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+test5000: galsim
+	./galsim 5000 ../input_data/ellipse_N_05000.gal 100 $(DELTA) $(THETA_MAX) $(GR) $(NTHREADS)
