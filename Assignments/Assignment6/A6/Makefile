@@ -27,19 +27,19 @@ clean:
 
 #------------------------------------------------------------------------------------------------------------------
 
-test2000: galsim
-	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
-	./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) 0.256 $(GR) 4
-	../compare_gal_files/./compare 02000 result.gal ../ref_output_data/ellipse_N_02000_after200steps.gal
+# test2000: galsim
+# 	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+# 	./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) 0.256 $(GR) 4
+# 	../compare_gal_files/./compare 02000 result.gal ../ref_output_data/ellipse_N_02000_after200steps.gal
 
-test3000: galsim
-	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
-	./galsim 03000 ../input_data/ellipse_N_03000.gal 100 $(DELTA) 0.584 $(GR) 4
-	../compare_gal_files/./compare 03000 result.gal ../ref_output_data/ellipse_N_03000_after100steps.gal
+# test3000: galsim
+# 	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+# 	./galsim 03000 ../input_data/ellipse_N_03000.gal 100 $(DELTA) 0.584 $(GR) 4
+# 	../compare_gal_files/./compare 03000 result.gal ../ref_output_data/ellipse_N_03000_after100steps.gal
 
-test5000: galsim
-	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
-	./galsim 05000 ../input_data/ellipse_N_05000.gal 100 $(DELTA) $(THETA_MAX) $(GR) 16
+# test5000: galsim
+# 	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 02000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+# 	./galsim 05000 ../input_data/ellipse_N_05000.gal 100 $(DELTA) $(THETA_MAX) $(GR) 16
 
 # test10: galsim
 # 	# valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./galsim 00010 ../input_data/ellipse_N_00010.gal 200 $(DELTA) $(THETA_MAX) $(GR)
@@ -63,24 +63,35 @@ test5000: galsim
 
 #------------------------------------------------------------------------------------------------------------------
 
-
-# test10: galsim
-# 	./galsim 10 ../input_data/ellipse_N_00010.gal 200 $(DELTA) $(THETA_MAX) $(GR)
-# test50: galsim
-# 	./galsim 50 ../input_data/ellipse_N_00050.gal 200 $(DELTA) $(THETA_MAX) $(GR)
 # test100: galsim
-# 	./galsim 100 ../input_data/ellipse_N_00100.gal 200 $(DELTA) $(THETA_MAX) $(GR)
-# test200: galsim
-# 	./galsim 200 ../input_data/ellipse_N_00200.gal 200 $(DELTA) $(THETA_MAX) $(GR)
-# test500: galsim
-# 	./galsim 500 ../input_data/ellipse_N_00500.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+# 	./galsim 100 ../input_data/ellipse_N_00100.gal 200 $(DELTA) $(THETA_MAX) $(GR) 8
+
 # test1000: galsim
-# 	./galsim 1000 ../input_data/ellipse_N_01000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+# 	./galsim 1000 ../input_data/ellipse_N_01000.gal 200 $(DELTA) $(THETA_MAX) $(GR) 8
+
 # test2000: galsim
-# 	./galsim 2000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+# 	./galsim 2000 ../input_data/ellipse_N_02000.gal 200 $(DELTA) $(THETA_MAX) $(GR) 8
+
 # test3000: galsim
-# 	./galsim 3000 ../input_data/ellipse_N_03000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+# 	./galsim 3000 ../input_data/ellipse_N_03000.gal 200 $(DELTA) $(THETA_MAX) $(GR) 8
+
 # test4000: galsim
-# 	./galsim 4000 ../input_data/ellipse_N_04000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+# 	./galsim 4000 ../input_data/ellipse_N_04000.gal 200 $(DELTA) $(THETA_MAX) $(GR) 8
+
 # test5000: galsim
-# 	./galsim 5000 ../input_data/ellipse_N_05000.gal 200 $(DELTA) $(THETA_MAX) $(GR)
+# 	./galsim 5000 ../input_data/ellipse_N_05000.gal 200 $(DELTA) $(THETA_MAX) $(GR) 8
+
+# test6000: galsim
+# 	./galsim 6000 ../input_data/ellipse_N_06000.gal 200 $(DELTA) $(THETA_MAX) $(GR) 8
+
+# test7000: galsim
+# 	./galsim 7000 ../input_data/ellipse_N_07000.gal 200 $(DELTA) $(THETA_MAX) $(GR) 8
+
+# test8000: galsim
+# 	./galsim 8000 ../input_data/ellipse_N_08000.gal 200 $(DELTA) $(THETA_MAX) $(GR) 8
+
+# test9000: galsim
+# 	./galsim 9000 ../input_data/ellipse_N_09000.gal 200 $(DELTA) $(THETA_MAX) $(GR) 8
+
+# test10000: galsim
+# 	./galsim 10000 ../input_data/ellipse_N_10000.gal 200 $(DELTA) $(THETA_MAX) $(GR) 8	
