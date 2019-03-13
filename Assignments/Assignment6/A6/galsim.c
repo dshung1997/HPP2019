@@ -4,6 +4,7 @@
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
+#include <omp.h>
 
 #include "Quad.h"
 #include "graphics.h"
@@ -25,10 +26,10 @@ void write_points(char* filename, point list_points[], double* velo_x, double* v
 void display(quad* qtree, point* list_points, int N, char* window_title);
 void display_quad_rectangle(quad* q);
 
-void next_time_step(point* restrict list_points, double* restrict velo_x, double* restrict velo_y, int N, double delta, double theta_max);
+void next_time_step(point* restrict list_points, double* restrict velo_x, double* restrict velo_y, int N, double delta, double theta_max, int n_threads);
 
-void execute_with_graphics(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, char* window_title);
-void execute(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, char* window_title);
+void execute_with_graphics(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, int n_threads, char* window_title);
+void execute(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, int n_threads, char* window_title);
 
 void output_filename(char* input, char* output, int nsteps);
 
@@ -42,7 +43,7 @@ double get_wall_seconds(){
 
 int main(int argc, char* argv[])
 {
-    if(argc != 7)
+    if(argc != 8)
     {
         printf("Wrong syntax.\n./galsim N filename nsteps delta_t theta_max graphics\n");
         return -1;
@@ -57,6 +58,8 @@ int main(int argc, char* argv[])
     double theta_max = (double) atof(argv[5]);
     int graphics = atoi(argv[6]);
     G /= (double) N;
+
+    int n_threads = atoi(argv[7]);
 
     point list_points[N];
     double velo_x[N];
@@ -84,12 +87,12 @@ int main(int argc, char* argv[])
 
     if(graphics)
     {
-        execute_with_graphics(list_points, velo_x, velo_y, N, nsteps, delta, theta_max, argv[0]);
+        execute_with_graphics(list_points, velo_x, velo_y, N, nsteps, delta, theta_max, n_threads, argv[0]);
     }
     else
     {
         t1 = get_wall_seconds();
-        execute(list_points, velo_x, velo_y, N, nsteps, delta, theta_max, argv[0]);   
+        execute(list_points, velo_x, velo_y, N, nsteps, delta, theta_max, n_threads, argv[0]);   
         t2 = get_wall_seconds();
         time_all += (t2 - t1);
         printf("Execution time: %lf\n", t2-t1);
@@ -166,7 +169,7 @@ void display_quad_rectangle(quad* q)
     }
 }
 
-void next_time_step(point* restrict list_points, double* restrict velo_x, double* restrict velo_y, int N, double delta, double theta_max)
+void next_time_step(point* restrict list_points, double* restrict velo_x, double* restrict velo_y, int N, double delta, double theta_max, int n_threads)
 {
     force f[N];
     quad* qtree = NULL;
@@ -180,24 +183,34 @@ void next_time_step(point* restrict list_points, double* restrict velo_x, double
 
     quad_mass(&qtree);
 
-    for(int i = 0; i < N; i++)
+    int i;
+    
+    #pragma omp parallel num_threads(n_threads)
     {
-        f[i] = quad_force(qtree, &(list_points[i]), theta_max2);
+        #pragma omp for schedule(dynamic)
+        for(i = 0; i < N; i++)
+        {
+            f[i] = quad_force(qtree, &(list_points[i]), theta_max2);
+        }
     }
 
-    for(int i = 0; i < N; i++)
+    #pragma omp parallel num_threads(n_threads)
     {
-        velo_x[i] += - G * delta * f[i].fx;
-        velo_y[i] += - G * delta * f[i].fy;
+        #pragma omp for schedule(dynamic)
+        for(i = 0; i < N; i++)
+        {
+            velo_x[i] += - G * delta * f[i].fx;
+            velo_y[i] += - G * delta * f[i].fy;
 
-        list_points[i].px += delta * velo_x[i];
-        list_points[i].py += delta * velo_y[i];
+            list_points[i].px += delta * velo_x[i];
+            list_points[i].py += delta * velo_y[i];
+        }
     }
 
     quad_free(&qtree);
 }
 
-void execute_with_graphics(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, char* window_title)
+void execute_with_graphics(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, int n_threads, char* window_title)
 {
 
     InitializeGraphics(window_title, windowWidth, windowWidth);
@@ -220,7 +233,7 @@ void execute_with_graphics(point* __restrict list_points, double* __restrict vel
         /* Sleep a short while to avoid screen flickering. */
         usleep(5000);
 
-        next_time_step(list_points, velo_x, velo_y, N, delta, theta_max);
+        next_time_step(list_points, velo_x, velo_y, N, delta, theta_max, n_threads);
         
         count_steps += 1;
     }
@@ -229,11 +242,11 @@ void execute_with_graphics(point* __restrict list_points, double* __restrict vel
     CloseDisplay();
 }
 
-void execute(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, char* window_title)
+void execute(point* __restrict list_points, double* __restrict velo_x, double* __restrict velo_y, int N, int nsteps, double delta, double theta_max, int n_threads, char* window_title)
 {
     for(int i = 0; i < nsteps; i++)
     {
-        next_time_step(list_points, velo_x, velo_y, N, delta, theta_max);
+        next_time_step(list_points, velo_x, velo_y, N, delta, theta_max, n_threads);
     }
 }
 
