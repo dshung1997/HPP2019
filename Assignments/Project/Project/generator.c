@@ -39,9 +39,9 @@ int main(int argc, char* argv[])
         }
     }
 
-    FILE* f1 = fopen("input/input_2048_1.mat", "wb");
-    FILE* f2 = fopen("input/input_2048_2.mat", "wb");
-    FILE* f3 = fopen("output/output_2048.mat", "wb");
+    FILE* f1 = fopen("input/input_1024_1.mat", "wb");
+    FILE* f2 = fopen("input/input_1024_2.mat", "wb");
+    FILE* f3 = fopen("output/output_1024.mat", "wb");
 
     fwrite(&n, sizeof(int), 1, f1);
     fwrite(&n, sizeof(int), 1, f2);
@@ -49,9 +49,9 @@ int main(int argc, char* argv[])
 
     for(int i = 0; i < n; i++)
     {
-        fwrite(&a[i], sizeof(double), n, f1);
-        fwrite(&b[i], sizeof(double), n, f2);
-        fwrite(&c[i], sizeof(double), n, f3);
+        fwrite(a[i], sizeof(double), n, f1);
+        fwrite(b[i], sizeof(double), n, f2);
+        fwrite(c[i], sizeof(double), n, f3);
     }
 
     for(int i = 0; i < n; i++)
