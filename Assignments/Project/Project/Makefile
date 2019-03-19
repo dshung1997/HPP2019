@@ -1,14 +1,28 @@
-main: main.c
-	gcc -o main main.c
+# CFLAGS=-Wall
+# INCLUDES=-I/opt/X11/include
+# LDFLAGS=-L/opt/X11/lib -lX11 -lm
+# OPTFLAGS=-Ofast -fopenmp -funroll-loops -march=native # -funroll-loops
+DEBUG=-g -pg
+
+main: main.c main.o helper.h helper.c helper.o
+	gcc -g -pg -o main main.o helper.o
+	valgrind -v --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./main 512
+	./main 512
+
+main.o: main.c helper.h helper.c
+	gcc -c main.c $(CFLAGS) $(OPTFLAGS)
+
+helper.o: helper.c helper.h
+	gcc -c helper.c $(CFLAGS) $(OPTFLAGS)
 
 compare: compare.c
-	gcc -o compare compare.c -lm -Wall
+	gcc -o compare compare.c -lm $(CFLAGS) $(OPTFLAGS)
 
 generator: generator.c
-	gcc -o generator generator.c
+	gcc -o generator generator.c $(CFLAGS) $(OPTFLAGS)
 
 clean:
-	rm -f main compare generator a.out *.o
+	rm -f main compare generator a.out *.o gmon.out
 
 
 # CFLAGS=-Wall
