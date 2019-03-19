@@ -4,6 +4,19 @@
 
 int main(int argc, char* argv[])
 {
+    printf("Change the file names before doing things !\n");
+
+    if(argc != 2) 
+    {
+        printf("Syntax: /generator size_of_matrix\n");
+        return 0;
+    }
+
+#if 0
+    char input1[] = "input/input_1024_1.mat";
+    char input2[] = "input/input_1024_2.mat";
+    char output[] = "output/output_1024.mat";
+
     srand(1);
     int n = atoi(argv[1]);
 
@@ -39,9 +52,9 @@ int main(int argc, char* argv[])
         }
     }
 
-    FILE* f1 = fopen("input/input_1024_1.mat", "wb");
-    FILE* f2 = fopen("input/input_1024_2.mat", "wb");
-    FILE* f3 = fopen("output/output_1024.mat", "wb");
+    FILE* f1 = fopen(input1, "wb");
+    FILE* f2 = fopen(input2, "wb");
+    FILE* f3 = fopen(output, "wb");
 
     fwrite(&n, sizeof(int), 1, f1);
     fwrite(&n, sizeof(int), 1, f2);
@@ -65,5 +78,6 @@ int main(int argc, char* argv[])
     fclose(f2);
     fclose(f3);
     
+#endif    
     return 0;
 }
