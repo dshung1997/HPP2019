@@ -29,7 +29,7 @@ Naive solution:
 2048:   2m32,277s
 
 -----------------------------------------------------------------------------------
-Naive Strassens Algo:
+Naive Strassens Algo, but for just the first depth
 512:    0m0,687s
 1024:   0m8,187s
 2048:   1m58,075s
@@ -39,3 +39,40 @@ Naive Strassens Algo changing order i j k -> i k j:
 512:    0m0,534s
 1024:   0m4,090s
 2048:   0m31,837s
+
+-----------------------------------------------------------------------------------
+Naive Strassens Algo recursively
+512:    0m0,764s
+1024:   0m5,276s
+2048:   0m39,988s
+
+-----------------------------------------------------------------------------------
+Naive Strassens Algo recursively + opt   N=  8
+512:    0m0,371s
+1024:   0m2,493s
+2048:   0m18,481s
+
+Naive Strassens Algo recursively + opt   N=  16
+512:    0m0,217s
+1024:   0m1,486s
+2048:   0m10,746s
+
+Naive Strassens Algo recursively + opt   N=  32
+512:    0m0,142s
+1024:   0m0,878s
+2048:   0m5,814s
+
+Naive Strassens Algo recursively + opt   N=  64
+512:    0m0,101s
+1024:   0m0,596s
+2048:   0m3,824s
+
+Naive Strassens Algo recursively + opt   N=  128
+512:    0m0,082s
+1024:   0m0,485s
+2048:   0m3,255s
+
+Naive Strassens Algo recursively + opt   N=  256
+512:    0m0,071s
+1024:   0m0,422s
+2048:   0m2,853s

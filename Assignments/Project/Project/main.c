@@ -31,14 +31,15 @@ int main(int argc, char* argv[])
     if(read_matrix_1 == 0)
         return 0;
 
-    for(int i = 0; i < 10; i++)
-    {
-        printf("%lf - %lf\n", matrix1[0][i], matrix2[0][i]);
-    }
+    // for(int i = 0; i < 10; i++)
+    // {
+    //     printf("%lf - %lf\n", matrix1[0][i], matrix2[0][i]);
+    // }
 
     matrix_out = allocate_matrix(N);
+    matrix_multiplication_4(matrix1, matrix2, matrix_out, N);
 
-    matrix_multiplication_2(matrix1, matrix2, matrix_out, N);
+    // matrix_out = matrix_multiplication_4(matrix1, matrix2, N);
     
     int write_matrix_out = write_output_file(output_file, N, matrix_out);
 

@@ -1,14 +1,13 @@
-# CFLAGS=-Wall
+CFLAGS=-Wall -mavx
 # INCLUDES=-I/opt/X11/include
 # LDFLAGS=-L/opt/X11/lib -lX11 -lm
-# OPTFLAGS=-Ofast -fopenmp -funroll-loops -march=native # -funroll-loops
-# DEBUG=-g 
+OPTFLAGS=-O3 # -fopt-info-vec # -fopt-info-vec-all#-Ofast -fopenmp -funroll-loops -march=native # -funroll-loops
+DEBUG=-g 
 # GMON=-pg
 
 main: main.c main.o helper.h helper.c helper.o
-	gcc $(DEBUG) $(GMON) -o main main.o helper.o
+	gcc $(DEBUG) $(GMON) -o main main.o helper.o $(CFLAGS) $(OPTFLAGS)
 	# valgrind -v --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all ./main 512
-	
 
 main.o: main.c helper.h helper.c
 	gcc -c main.c $(CFLAGS) $(OPTFLAGS)
