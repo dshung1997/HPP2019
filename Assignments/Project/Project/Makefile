@@ -1,7 +1,5 @@
-CFLAGS=-Wall -mavx
-# INCLUDES=-I/opt/X11/include
-# LDFLAGS=-L/opt/X11/lib -lX11 -lm
-OPTFLAGS=-O3 # -fopt-info-vec # -fopt-info-vec-all#-Ofast -fopenmp -funroll-loops -march=native # -funroll-loops
+CFLAGS=-Wall -mavx -fopenmp
+OPTFLAGS=-O3 -funroll-loops -march=native
 DEBUG=-g 
 # GMON=-pg
 
@@ -34,30 +32,4 @@ generator: generator.c
 	gcc -o generator generator.c $(CFLAGS) $(OPTFLAGS)
 
 clean:
-	rm -f main a.out *.o gmon.out
-
-cleanall:
 	rm -f main compare generator a.out *.o gmon.out result.mat
-
-# CFLAGS=-Wall
-# INCLUDES=-I/opt/X11/include
-# LDFLAGS=-L/opt/X11/lib -lX11 -lm
-# OPTFLAGS=-Ofast -fopenmp -funroll-loops -march=native # -funroll-loops
-# DEBUG=#-g -pg
-
-# #------------------------------------------------------------------------------------------------------------------
-
-# galsim: galsim.c galsim.o Quad.h Quad.c Quad.o graphics.o graphics.h graphics.c
-# 	gcc $(DEBUG) -o galsim galsim.o Quad.o graphics.o $(LDFLAGS) $(CFLAGS) $(OPTFLAGS)
-
-# galsim.o: galsim.c Quad.h Quad.c
-# 	gcc -c galsim.c $(CFLAGS) $(OPTFLAGS)
-
-# Quad.o: Quad.c Quad.h
-# 	gcc -c Quad.c $(CFLAGS) $(OPTFLAGS)
-
-# graphics.o: graphics.c graphics.h
-# 	gcc $(INCLUDES) -c graphics.c $(CFLAGS) $(OPTFLAGS)
-
-# clean:
-# 	rm -f galsim galsim-array test a.out *.o *.gal gmon.out

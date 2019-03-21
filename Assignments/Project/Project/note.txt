@@ -76,3 +76,10 @@ Naive Strassens Algo recursively + opt   N=  256
 512:    0m0,071s
 1024:   0m0,422s
 2048:   0m2,853s
+
+
+Naive Strassens Algo recursively + opt   N=  256 || parallel n = 4
+512:    0m0,050s
+1024:   0m0,422s
+2048:   0m1,291s
+

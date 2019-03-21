@@ -81,7 +81,6 @@ int read_input_file (char* filename, int N, double*** matrix_pointer)
     return 1;
 }
 
-
 int write_output_file (char* filename, int N, double** matrix_pointer)
 {
     FILE* f = fopen(filename, "wb");
@@ -110,6 +109,23 @@ int write_output_file (char* filename, int N, double** matrix_pointer)
     return 1;
 }
 
+double** matrix_generate(int N)
+{
+    double** m = allocate_matrix(N);
+
+    srand(1);
+
+    for(int i = 0; i < N; i++)
+    {
+        for(int j = 0; j < N; j++)
+        {
+            m[i][j] = (double)rand() / RAND_MAX*200.0-100.0;
+        }
+    }
+
+    return m;
+}
+
 double** allocate_matrix(int N)
 {
     double** m = NULL;
@@ -127,8 +143,6 @@ double** allocate_matrix(int N)
 
 void free_matrix (double*** matrix_pointer, int N)
 {
-    // int count = 0;
-
     if(*matrix_pointer == NULL)
         return;
 
@@ -136,20 +150,10 @@ void free_matrix (double*** matrix_pointer, int N)
     {
         free((*matrix_pointer)[i]);
         (*matrix_pointer)[i] = NULL;
-
-        // if((*matrix_pointer)[i] == NULL)
-        // {
-        //     count += 1;
-        // }
     }
 
     free(*matrix_pointer);
     *matrix_pointer = NULL;
-
-    // if(count == N)
-    // {
-    //     printf("OK.........\n");
-    // }
 }
 
 void matrix_multiplication_1(double** matrix_in_1, double** matrix_in_2, double** matrix_out, int N)
@@ -229,6 +233,304 @@ void matrix_multiplication_2(double** matrix_in_1, double** matrix_in_2, double*
 
     double** p7 = allocate_matrix(N_half);
     matrix_multiplication_1(s9, s10, p7, N_half);
+
+    double** c001 = matrix_addition(p5, p4, N_half);
+    double** c002 = matrix_subtraction(p2, p6, N_half);
+    double** c00 = matrix_subtraction(c001, c002, N_half);
+
+    double** c01 = matrix_addition(p1, p2, N_half);
+    double** c10 = matrix_addition(p3, p4, N_half);
+
+    double** c111 = matrix_addition(p1, p5, N_half);
+    double** c112 = matrix_addition(p3, p7, N_half);
+    double** c11 = matrix_subtraction(c111, c112, N_half);
+
+    matrix_merge(matrix_out, N, c00, c01, c10, c11);
+
+    free_matrix(&a00, N_half); free_matrix(&a01, N_half); free_matrix(&a10, N_half); free_matrix(&a11, N_half);
+    free_matrix(&b00, N_half); free_matrix(&b01, N_half); free_matrix(&b10, N_half); free_matrix(&b11, N_half);
+
+    free_matrix(&s1, N_half); free_matrix(&s2, N_half); free_matrix(&s3, N_half); free_matrix(&s4, N_half); 
+    free_matrix(&s5, N_half); free_matrix(&s6, N_half); free_matrix(&s7, N_half); free_matrix(&s8, N_half); 
+    free_matrix(&s9, N_half); free_matrix(&s10, N_half);
+
+    free_matrix(&p1, N_half); free_matrix(&p2, N_half); free_matrix(&p3, N_half); free_matrix(&p4, N_half); 
+    free_matrix(&p5, N_half); free_matrix(&p6, N_half); free_matrix(&p7, N_half);
+
+    free_matrix(&c001, N_half); free_matrix(&c002, N_half); free_matrix(&c00, N_half);
+    free_matrix(&c01, N_half); free_matrix(&c10, N_half);
+    free_matrix(&c111, N_half); free_matrix(&c112, N_half); free_matrix(&c11, N_half);
+}
+
+void matrix_multiplication_3(double** matrix_in_1, double** matrix_in_2, double** matrix_out, int N)
+{
+    int N_half = N >> 1;
+
+    double** a00 = matrix_split(matrix_in_1, N, 0, 0);
+    double** a01 = matrix_split(matrix_in_1, N, 0, 1);
+    double** a10 = matrix_split(matrix_in_1, N, 1, 0);
+    double** a11 = matrix_split(matrix_in_1, N, 1, 1);
+    
+    double** b00 = matrix_split(matrix_in_2, N, 0, 0);
+    double** b01 = matrix_split(matrix_in_2, N, 0, 1);
+    double** b10 = matrix_split(matrix_in_2, N, 1, 0);
+    double** b11 = matrix_split(matrix_in_2, N, 1, 1);
+    
+    double** s1 = matrix_subtraction_vector(b01, b11, N_half);
+    double** s2 = matrix_addition_vector(a00, a01, N_half);
+    double** s3 = matrix_addition_vector(a10, a11, N_half);
+    double** s4 = matrix_subtraction_vector(b10, b00, N_half);
+    double** s5 = matrix_addition_vector(a00, a11, N_half);
+    double** s6 = matrix_addition_vector(b00, b11, N_half);    
+    double** s7 = matrix_subtraction_vector(a01, a11, N_half);
+    double** s8 = matrix_addition_vector(b10, b11, N_half);   
+    double** s9 = matrix_subtraction_vector(a00, a10, N_half);
+    double** s10 = matrix_addition_vector(b00, b01, N_half);
+
+
+    double** p1 = matrix_multiplication_vector(a00, s1, N_half);
+    double** p2 = matrix_multiplication_vector(s2, b11, N_half);
+    double** p3 = matrix_multiplication_vector(s3, b00, N_half);
+    double** p4 = matrix_multiplication_vector(a11, s4, N_half);
+    double** p5 = matrix_multiplication_vector(s5, s6, N_half);
+    double** p6 = matrix_multiplication_vector(s7, s8, N_half);
+    double** p7 = matrix_multiplication_vector(s9, s10, N_half);
+
+
+    double** c001 = matrix_addition_vector(p5, p4, N_half);
+    double** c002 = matrix_subtraction_vector(p2, p6, N_half);
+    double** c00 = matrix_subtraction_vector(c001, c002, N_half);
+
+    double** c01 = matrix_addition_vector(p1, p2, N_half);
+    double** c10 = matrix_addition_vector(p3, p4, N_half);
+
+    double** c111 = matrix_addition_vector(p1, p5, N_half);
+    double** c112 = matrix_addition_vector(p3, p7, N_half);
+    double** c11 = matrix_subtraction_vector(c111, c112, N_half);
+
+    matrix_merge(matrix_out, N, c00, c01, c10, c11);
+
+    free_matrix(&a00, N_half); free_matrix(&a01, N_half); free_matrix(&a10, N_half); free_matrix(&a11, N_half);
+    free_matrix(&b00, N_half); free_matrix(&b01, N_half); free_matrix(&b10, N_half); free_matrix(&b11, N_half);
+
+    free_matrix(&s1, N_half); free_matrix(&s2, N_half); free_matrix(&s3, N_half); free_matrix(&s4, N_half); 
+    free_matrix(&s5, N_half); free_matrix(&s6, N_half); free_matrix(&s7, N_half); free_matrix(&s8, N_half); 
+    free_matrix(&s9, N_half); free_matrix(&s10, N_half);
+
+    free_matrix(&p1, N_half); free_matrix(&p2, N_half); free_matrix(&p3, N_half); free_matrix(&p4, N_half); 
+    free_matrix(&p5, N_half); free_matrix(&p6, N_half); free_matrix(&p7, N_half);
+
+    free_matrix(&c001, N_half); free_matrix(&c002, N_half); free_matrix(&c00, N_half);
+    free_matrix(&c01, N_half); free_matrix(&c10, N_half);
+    free_matrix(&c111, N_half); free_matrix(&c112, N_half); free_matrix(&c11, N_half);
+}
+
+void matrix_multiplication_4(double** matrix_in_1, double** matrix_in_2, double** matrix_out, int N)
+{
+
+    if(N == 256)
+    {
+        for(int i = 0; i < N; i++)
+        {
+            for(int k = 0; k < N; k++)
+            {
+                for(int j = 0; j < N; j++)
+                {
+                    matrix_out[i][j] += matrix_in_1[i][k] * matrix_in_2[k][j];
+                }
+            }
+        }
+
+        return;
+    }
+
+    int N_half = N >> 1;
+
+    double** a00 = matrix_split(matrix_in_1, N, 0, 0);
+    double** a01 = matrix_split(matrix_in_1, N, 0, 1);
+    double** a10 = matrix_split(matrix_in_1, N, 1, 0);
+    double** a11 = matrix_split(matrix_in_1, N, 1, 1);
+    
+    double** b00 = matrix_split(matrix_in_2, N, 0, 0);
+    double** b01 = matrix_split(matrix_in_2, N, 0, 1);
+    double** b10 = matrix_split(matrix_in_2, N, 1, 0);
+    double** b11 = matrix_split(matrix_in_2, N, 1, 1);
+    
+    double** s1 = matrix_subtraction(b01, b11, N_half);
+    double** s2 = matrix_addition(a00, a01, N_half);
+    double** s3 = matrix_addition(a10, a11, N_half);
+    double** s4 = matrix_subtraction(b10, b00, N_half);
+    double** s5 = matrix_addition(a00, a11, N_half);
+    double** s6 = matrix_addition(b00, b11, N_half);    
+    double** s7 = matrix_subtraction(a01, a11, N_half);
+    double** s8 = matrix_addition(b10, b11, N_half);   
+    double** s9 = matrix_subtraction(a00, a10, N_half);
+    double** s10 = matrix_addition(b00, b01, N_half);
+
+    double** p1 = allocate_matrix(N_half);
+    matrix_multiplication_4(a00, s1, p1, N_half);
+
+    double** p2 = allocate_matrix(N_half);
+    matrix_multiplication_4(s2, b11, p2, N_half);
+
+    double** p3 = allocate_matrix(N_half);
+    matrix_multiplication_4(s3, b00, p3, N_half);
+
+    double** p4 = allocate_matrix(N_half);
+    matrix_multiplication_4(a11, s4, p4, N_half);
+
+    double** p5 = allocate_matrix(N_half);
+    matrix_multiplication_4(s5, s6, p5, N_half);
+
+    double** p6 = allocate_matrix(N_half);
+    matrix_multiplication_4(s7, s8, p6, N_half);
+
+    double** p7 = allocate_matrix(N_half);
+    matrix_multiplication_4(s9, s10, p7, N_half);
+
+    double** c001 = matrix_addition(p5, p4, N_half);
+    double** c002 = matrix_subtraction(p2, p6, N_half);
+    double** c00 = matrix_subtraction(c001, c002, N_half);
+
+    double** c01 = matrix_addition(p1, p2, N_half);
+    double** c10 = matrix_addition(p3, p4, N_half);
+
+    double** c111 = matrix_addition(p1, p5, N_half);
+    double** c112 = matrix_addition(p3, p7, N_half);
+    double** c11 = matrix_subtraction(c111, c112, N_half);
+
+    matrix_merge(matrix_out, N, c00, c01, c10, c11);
+
+    free_matrix(&a00, N_half); free_matrix(&a01, N_half); free_matrix(&a10, N_half); free_matrix(&a11, N_half);
+    free_matrix(&b00, N_half); free_matrix(&b01, N_half); free_matrix(&b10, N_half); free_matrix(&b11, N_half);
+
+    free_matrix(&s1, N_half); free_matrix(&s2, N_half); free_matrix(&s3, N_half); free_matrix(&s4, N_half); 
+    free_matrix(&s5, N_half); free_matrix(&s6, N_half); free_matrix(&s7, N_half); free_matrix(&s8, N_half); 
+    free_matrix(&s9, N_half); free_matrix(&s10, N_half);
+
+    free_matrix(&p1, N_half); free_matrix(&p2, N_half); free_matrix(&p3, N_half); free_matrix(&p4, N_half); 
+    free_matrix(&p5, N_half); free_matrix(&p6, N_half); free_matrix(&p7, N_half);
+
+    free_matrix(&c001, N_half); free_matrix(&c002, N_half); free_matrix(&c00, N_half);
+    free_matrix(&c01, N_half); free_matrix(&c10, N_half);
+    free_matrix(&c111, N_half); free_matrix(&c112, N_half); free_matrix(&c11, N_half);
+}
+
+void matrix_multiplication_5(double** matrix_in_1, double** matrix_in_2, double** matrix_out, int N, int n_threads)
+{
+    int N_half = N >> 1;
+
+    double** c[2][2];
+    double** a[2][2];
+    double** b[2][2];
+
+    int i = 0;
+
+    // Split the input matrices into 4 parts
+    #pragma omp parallel for schedule(dynamic) num_threads(n_threads)
+    for(i = 0; i < 4; i++)
+    {
+        int y = i >> 1;
+        int x = i & 1;
+        a[y][x] = matrix_split(matrix_in_1, N, y, x);
+        b[y][x] = matrix_split(matrix_in_2, N, y, x);
+    }
+
+    // Let each thread take care of two multiplications and then add them up.
+    #pragma omp parallel for schedule(dynamic) num_threads(n_threads)
+    for(i = 0; i < 4; i++)
+    {
+        int y = i >> 1;
+        int x = i & 1;
+
+        double** temp1 = allocate_matrix(N_half);
+        double** temp2 = allocate_matrix(N_half);
+        matrix_multiplication_5_helper(a[y][0], b[0][x], temp1, N_half);
+        matrix_multiplication_5_helper(a[y][1], b[1][x], temp2, N_half);
+
+        c[y][x] = matrix_addition(temp1, temp2, N_half);
+
+        free_matrix(&temp1, N_half);
+        free_matrix(&temp2, N_half);
+    }
+
+    // Merge 4 sub-matrices into one
+    matrix_merge(matrix_out, N, c[0][0], c[0][1], c[1][0], c[1][1]);
+
+    // Free the memory
+    for(int j = 0; j < 2; j++)
+    {
+        for(int k = 0; k < 2; k++)
+        {
+            free_matrix(&a[j][k], N_half);
+            free_matrix(&b[j][k], N_half);
+            free_matrix(&c[j][k], N_half);
+        }
+    }
+}
+
+void matrix_multiplication_5_helper(double** matrix_in_1, double** matrix_in_2, double** matrix_out, int N)
+{
+
+    if(N <= 256)
+    {
+        for(int i = 0; i < N; i++)
+        {
+            for(int k = 0; k < N; k++)
+            {
+                for(int j = 0; j < N; j++)
+                {
+                    matrix_out[i][j] += matrix_in_1[i][k] * matrix_in_2[k][j];
+                }
+            }
+        }
+
+        return;
+    }
+
+    int N_half = N >> 1;
+
+    double** a00 = matrix_split(matrix_in_1, N, 0, 0);
+    double** a01 = matrix_split(matrix_in_1, N, 0, 1);
+    double** a10 = matrix_split(matrix_in_1, N, 1, 0);
+    double** a11 = matrix_split(matrix_in_1, N, 1, 1);
+    
+    double** b00 = matrix_split(matrix_in_2, N, 0, 0);
+    double** b01 = matrix_split(matrix_in_2, N, 0, 1);
+    double** b10 = matrix_split(matrix_in_2, N, 1, 0);
+    double** b11 = matrix_split(matrix_in_2, N, 1, 1);
+    
+    double** s1 = matrix_subtraction(b01, b11, N_half);
+    double** s2 = matrix_addition(a00, a01, N_half);
+    double** s3 = matrix_addition(a10, a11, N_half);
+    double** s4 = matrix_subtraction(b10, b00, N_half);
+    double** s5 = matrix_addition(a00, a11, N_half);
+    double** s6 = matrix_addition(b00, b11, N_half);    
+    double** s7 = matrix_subtraction(a01, a11, N_half);
+    double** s8 = matrix_addition(b10, b11, N_half);   
+    double** s9 = matrix_subtraction(a00, a10, N_half);
+    double** s10 = matrix_addition(b00, b01, N_half);
+
+    double** p1 = allocate_matrix(N_half);
+    matrix_multiplication_5_helper(a00, s1, p1, N_half);
+
+    double** p2 = allocate_matrix(N_half);
+    matrix_multiplication_5_helper(s2, b11, p2, N_half);
+
+    double** p3 = allocate_matrix(N_half);
+    matrix_multiplication_5_helper(s3, b00, p3, N_half);
+
+    double** p4 = allocate_matrix(N_half);
+    matrix_multiplication_5_helper(a11, s4, p4, N_half);
+
+    double** p5 = allocate_matrix(N_half);
+    matrix_multiplication_5_helper(s5, s6, p5, N_half);
+
+    double** p6 = allocate_matrix(N_half);
+    matrix_multiplication_5_helper(s7, s8, p6, N_half);
+
+    double** p7 = allocate_matrix(N_half);
+    matrix_multiplication_5_helper(s9, s10, p7, N_half);
 
     double** c001 = matrix_addition(p5, p4, N_half);
     double** c002 = matrix_subtraction(p2, p6, N_half);
@@ -397,159 +699,3 @@ double** matrix_multiplication_vector(double** matrix_in_1, double** matrix_in_2
 
     return matrix_out;
 }
-
-void matrix_multiplication_3(double** matrix_in_1, double** matrix_in_2, double** matrix_out, int N)
-{
-    int N_half = N >> 1;
-
-    double** a00 = matrix_split(matrix_in_1, N, 0, 0);
-    double** a01 = matrix_split(matrix_in_1, N, 0, 1);
-    double** a10 = matrix_split(matrix_in_1, N, 1, 0);
-    double** a11 = matrix_split(matrix_in_1, N, 1, 1);
-    
-    double** b00 = matrix_split(matrix_in_2, N, 0, 0);
-    double** b01 = matrix_split(matrix_in_2, N, 0, 1);
-    double** b10 = matrix_split(matrix_in_2, N, 1, 0);
-    double** b11 = matrix_split(matrix_in_2, N, 1, 1);
-    
-    double** s1 = matrix_subtraction_vector(b01, b11, N_half);
-    double** s2 = matrix_addition_vector(a00, a01, N_half);
-    double** s3 = matrix_addition_vector(a10, a11, N_half);
-    double** s4 = matrix_subtraction_vector(b10, b00, N_half);
-    double** s5 = matrix_addition_vector(a00, a11, N_half);
-    double** s6 = matrix_addition_vector(b00, b11, N_half);    
-    double** s7 = matrix_subtraction_vector(a01, a11, N_half);
-    double** s8 = matrix_addition_vector(b10, b11, N_half);   
-    double** s9 = matrix_subtraction_vector(a00, a10, N_half);
-    double** s10 = matrix_addition_vector(b00, b01, N_half);
-
-
-    double** p1 = matrix_multiplication_vector(a00, s1, N_half);
-    double** p2 = matrix_multiplication_vector(s2, b11, N_half);
-    double** p3 = matrix_multiplication_vector(s3, b00, N_half);
-    double** p4 = matrix_multiplication_vector(a11, s4, N_half);
-    double** p5 = matrix_multiplication_vector(s5, s6, N_half);
-    double** p6 = matrix_multiplication_vector(s7, s8, N_half);
-    double** p7 = matrix_multiplication_vector(s9, s10, N_half);
-
-
-    double** c001 = matrix_addition_vector(p5, p4, N_half);
-    double** c002 = matrix_subtraction_vector(p2, p6, N_half);
-    double** c00 = matrix_subtraction_vector(c001, c002, N_half);
-
-    double** c01 = matrix_addition_vector(p1, p2, N_half);
-    double** c10 = matrix_addition_vector(p3, p4, N_half);
-
-    double** c111 = matrix_addition_vector(p1, p5, N_half);
-    double** c112 = matrix_addition_vector(p3, p7, N_half);
-    double** c11 = matrix_subtraction_vector(c111, c112, N_half);
-
-    matrix_merge(matrix_out, N, c00, c01, c10, c11);
-
-    free_matrix(&a00, N_half); free_matrix(&a01, N_half); free_matrix(&a10, N_half); free_matrix(&a11, N_half);
-    free_matrix(&b00, N_half); free_matrix(&b01, N_half); free_matrix(&b10, N_half); free_matrix(&b11, N_half);
-
-    free_matrix(&s1, N_half); free_matrix(&s2, N_half); free_matrix(&s3, N_half); free_matrix(&s4, N_half); 
-    free_matrix(&s5, N_half); free_matrix(&s6, N_half); free_matrix(&s7, N_half); free_matrix(&s8, N_half); 
-    free_matrix(&s9, N_half); free_matrix(&s10, N_half);
-
-    free_matrix(&p1, N_half); free_matrix(&p2, N_half); free_matrix(&p3, N_half); free_matrix(&p4, N_half); 
-    free_matrix(&p5, N_half); free_matrix(&p6, N_half); free_matrix(&p7, N_half);
-
-    free_matrix(&c001, N_half); free_matrix(&c002, N_half); free_matrix(&c00, N_half);
-    free_matrix(&c01, N_half); free_matrix(&c10, N_half);
-    free_matrix(&c111, N_half); free_matrix(&c112, N_half); free_matrix(&c11, N_half);
-}
-
-
-void matrix_multiplication_4(double** matrix_in_1, double** matrix_in_2, double** matrix_out, int N)
-{
-
-    if(N == 256)
-    {
-        for(int i = 0; i < N; i++)
-        {
-            for(int k = 0; k < N; k++)
-            {
-                for(int j = 0; j < N; j++)
-                {
-                    matrix_out[i][j] += matrix_in_1[i][k] * matrix_in_2[k][j];
-                }
-            }
-        }
-
-        return;
-    }
-
-    int N_half = N >> 1;
-
-    double** a00 = matrix_split(matrix_in_1, N, 0, 0);
-    double** a01 = matrix_split(matrix_in_1, N, 0, 1);
-    double** a10 = matrix_split(matrix_in_1, N, 1, 0);
-    double** a11 = matrix_split(matrix_in_1, N, 1, 1);
-    
-    double** b00 = matrix_split(matrix_in_2, N, 0, 0);
-    double** b01 = matrix_split(matrix_in_2, N, 0, 1);
-    double** b10 = matrix_split(matrix_in_2, N, 1, 0);
-    double** b11 = matrix_split(matrix_in_2, N, 1, 1);
-    
-    double** s1 = matrix_subtraction(b01, b11, N_half);
-    double** s2 = matrix_addition(a00, a01, N_half);
-    double** s3 = matrix_addition(a10, a11, N_half);
-    double** s4 = matrix_subtraction(b10, b00, N_half);
-    double** s5 = matrix_addition(a00, a11, N_half);
-    double** s6 = matrix_addition(b00, b11, N_half);    
-    double** s7 = matrix_subtraction(a01, a11, N_half);
-    double** s8 = matrix_addition(b10, b11, N_half);   
-    double** s9 = matrix_subtraction(a00, a10, N_half);
-    double** s10 = matrix_addition(b00, b01, N_half);
-
-    double** p1 = allocate_matrix(N_half);
-    matrix_multiplication_4(a00, s1, p1, N_half);
-
-    double** p2 = allocate_matrix(N_half);
-    matrix_multiplication_4(s2, b11, p2, N_half);
-
-    double** p3 = allocate_matrix(N_half);
-    matrix_multiplication_4(s3, b00, p3, N_half);
-
-    double** p4 = allocate_matrix(N_half);
-    matrix_multiplication_4(a11, s4, p4, N_half);
-
-    double** p5 = allocate_matrix(N_half);
-    matrix_multiplication_4(s5, s6, p5, N_half);
-
-    double** p6 = allocate_matrix(N_half);
-    matrix_multiplication_4(s7, s8, p6, N_half);
-
-    double** p7 = allocate_matrix(N_half);
-    matrix_multiplication_4(s9, s10, p7, N_half);
-
-    double** c001 = matrix_addition(p5, p4, N_half);
-    double** c002 = matrix_subtraction(p2, p6, N_half);
-    double** c00 = matrix_subtraction(c001, c002, N_half);
-
-    double** c01 = matrix_addition(p1, p2, N_half);
-    double** c10 = matrix_addition(p3, p4, N_half);
-
-    double** c111 = matrix_addition(p1, p5, N_half);
-    double** c112 = matrix_addition(p3, p7, N_half);
-    double** c11 = matrix_subtraction(c111, c112, N_half);
-
-    matrix_merge(matrix_out, N, c00, c01, c10, c11);
-
-    free_matrix(&a00, N_half); free_matrix(&a01, N_half); free_matrix(&a10, N_half); free_matrix(&a11, N_half);
-    free_matrix(&b00, N_half); free_matrix(&b01, N_half); free_matrix(&b10, N_half); free_matrix(&b11, N_half);
-
-    free_matrix(&s1, N_half); free_matrix(&s2, N_half); free_matrix(&s3, N_half); free_matrix(&s4, N_half); 
-    free_matrix(&s5, N_half); free_matrix(&s6, N_half); free_matrix(&s7, N_half); free_matrix(&s8, N_half); 
-    free_matrix(&s9, N_half); free_matrix(&s10, N_half);
-
-    free_matrix(&p1, N_half); free_matrix(&p2, N_half); free_matrix(&p3, N_half); free_matrix(&p4, N_half); 
-    free_matrix(&p5, N_half); free_matrix(&p6, N_half); free_matrix(&p7, N_half);
-
-    free_matrix(&c001, N_half); free_matrix(&c002, N_half); free_matrix(&c00, N_half);
-    free_matrix(&c01, N_half); free_matrix(&c10, N_half);
-    free_matrix(&c111, N_half); free_matrix(&c112, N_half); free_matrix(&c11, N_half);
-}
-
