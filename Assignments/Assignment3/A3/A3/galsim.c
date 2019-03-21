@@ -8,28 +8,23 @@
 #include "point.h"
 #include "graphics.h"
 
-// use define instead
+
+// Define constants and global variables
 double G = 100.0;
 const double e0 = 0.001;
-// const double delta = 0.00001;
 
 const float circleRadius=0.0025, circleColor=0;
 const int windowWidth=800;
 const float L=1, W=1;
 
-//-----------------------------------------------------------------
-
-void next_time_step(point next_points[], int N, double delta);
-
-void write_points(char* filename, point list_points[], int N);
-
-void read_points(char* filename, point list_points[], int N);
-
-void execute(point* list_points, int N, int nsteps, double delta, char* window_title);
-
-void execute_with_graphics(point* list_points, int N, int nsteps, double delta, char* window_title);
-
+// Define functions
 void output_filename(char* input, char* output, int nsteps);
+void execute_with_graphics(double* restrict px, double* restrict py, double* restrict m, double* restrict vx, double* restrict vy, double* restrict b, int N, int nsteps, double delta, char* window_title);
+void execute(double* restrict px, double* restrict py, double* restrict m, double* restrict vx, double* restrict vy, double* restrict b, int N, int nsteps, double delta, char* window_title);
+void read_points(char* filename, double* restrict px, double* restrict py, double* restrict m, double* restrict vx, double* restrict vy, double* restrict b, int N);
+void write_points(char* filename, double* restrict px, double* restrict py, double* restrict m, double* restrict vx, double* restrict vy, double* restrict b, int N);
+void next_time_step(double* restrict next_px, double* restrict next_py, double* restrict m, double* restrict next_vx, double*  restrict next_vy, int N, double delta);
+void display(double* restrict px, double* restrict py, double* restrict m, double* restrict vx, double* restrict vy, double* restrict b, int N, int j) ;
 
 
 double get_wall_seconds(){
@@ -41,8 +36,7 @@ double get_wall_seconds(){
 }
 
 
-//-----------------------------------------------------------------
-
+// Main function
 int main(int argc, char* argv[])
 {
     // check arguments
@@ -52,8 +46,6 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    //-----------------------------------------------------------------
-
     // initialization
     int N = atoi(argv[1]);
     char* filename = argv[2];
@@ -61,123 +53,126 @@ int main(int argc, char* argv[])
     double delta = (double) atof(argv[4]);
     int graphics = atoi(argv[5]);
     G /= (double) N;
-    point list_points[N];
 
-    //-----------------------------------------------------------------
+    double px[N];
+    double py[N];
+    double m[N];
+    double vx[N];
+    double vy[N];
+    double b[N];
 
-    // read data
-    read_points(filename, list_points, N);
 
-    //-----------------------------------------------------------------
-
-    // calculation with and without graphics 
-    // void (*func_pointer[2])(point*, int, int, double, char*);
-    // func_pointer[0] = &execute;
-    // func_pointer[1] = &execute_with_graphics;
-
-    // (*func_pointer[graphics])(list_points, N, nsteps, delta, argv[0]);
+    // read data from file
+    read_points(filename, px, py, m, vx, vy, b, N);
 
     if(graphics)
     {
-        execute_with_graphics(list_points, N, nsteps, delta, argv[0]);
+        execute_with_graphics(px, py, m, vx, vy, b, N, nsteps, delta, argv[0]);
     }
     else
     {
         double t1 = get_wall_seconds();
-        execute(list_points, N, nsteps, delta, argv[0]);
+        
+        execute(px, py, m, vx, vy, b, N, nsteps, delta, argv[0]);
+        
         double t2 = get_wall_seconds();
         printf("---\nExecution time: %lf\n", t2-t1);
     }
 
-    
-
-    //-----------------------------------------------------------------
-
-    // write data
-    // char output[80] = "";
-    // output_filename(filename, output, nsteps);
-    // printf("---\nOutput file: %s\n---\n", output);
-
-    write_points("result.gal", list_points, N);
-
-    // print_list_points(list_points, N);
-
-    // point list_points_2[N];
-    // printf("---\n");
-    // read_points("../ref_output_data/circles_N_2_after3steps.gal", list_points_2, 2);
+    // write data to file
+    char output[] = "result.gal";
+    write_points(output, px, py, m, vx, vy, b, N);
 
     return 0;
 }
 
-void next_time_step(point next_points[], int N, double delta)
+void next_time_step(double* restrict next_px, double* restrict next_py, double* restrict m, double* restrict next_vx, double* restrict next_vy, int N, double delta)
 {
-    point prev_points[N];
+    // Declare and initialize the previous values of the velocity and positions.
+    double prev_px[N], prev_py[N], prev_vx[N], prev_vy[N];
+
+    size_t copy_size = N * sizeof(double);
+    memcpy(prev_px, next_px, copy_size);
+    memcpy(prev_py, next_py, copy_size);
+    memcpy(prev_vx, next_vx, copy_size);
+    memcpy(prev_vy, next_vy, copy_size);
+
+    // Force along x-axis and y-axis
+    double fx[N], fy[N];
 
     for(int i = 0; i < N; i++)
     {
-        prev_points[i] = next_points[i];
+        fx[i] = 0;
+        fy[i] = 0;
     }
 
     for(int i = 0; i < N; i++)
     {
-        double fx = 0.0, fy = 0.0;
-
-        for(int j = 0; j < N; j++)
+        for(int j = i+1; j < N; j++)
         {
-            if(i == j) 
-                continue;
-
-            double rx = prev_points[i].px - prev_points[j].px;
-            double ry = prev_points[i].py - prev_points[j].py;
+            double rx = prev_px[i] - prev_px[j];
+            double ry = prev_py[i] - prev_py[j];
 
             double r = sqrt((rx * rx) + (ry * ry));
 
-            // double r1 = pow((r + e0), 3);
             double r1 = (r + e0) * (r + e0) * (r + e0);
 
-            double tempx = prev_points[j].m * rx / r1;
-            double tempy = prev_points[j].m * ry / r1;
+            double rx_d = rx / r1;
+            double ry_d = ry / r1;
 
-            fx = fx + tempx;
-            fy = fy + tempy;
+            fx[i] += (- rx_d * m[j]);
+            fy[i] += (- ry_d * m[j]);
+
+            fx[j] += (rx_d * m[i]);
+            fy[j] += (ry_d * m[i]);
         }
 
-        double ax = - fx * G;
-        double ay = - fy * G;
+        double ax = fx[i] * G;
+        double ay = fy[i] * G;
 
-        next_points[i].vx = prev_points[i].vx + delta * ax;
-        next_points[i].vy = prev_points[i].vy + delta * ay;
+        next_vx[i] = prev_vx[i] + delta * ax;
+        next_vy[i] = prev_vy[i] + delta * ay;
 
-        next_points[i].px = prev_points[i].px + delta * next_points[i].vx;
-        next_points[i].py = prev_points[i].py + delta * next_points[i].vy;
+        next_px[i] = prev_px[i] + delta * next_vx[i];
+        next_py[i] = prev_py[i] + delta * next_vy[i];
     }
 }
 
-void write_points(char* filename, point list_points[], int N)
+void write_points(char* filename, double* px, double* py, double* m, double* vx, double* vy, double* b, int N)
 {
     FILE* fw = fopen(filename, "wb");
 
     for(int i = 0; i < N; i++)
     {
         double _px, _py, _m, _vx, _vy, _b;
-        _px = list_points[i].px;
-        _py = list_points[i].py;
-        _m = list_points[i].m;
-        _vx = list_points[i].vx;
-        _vy = list_points[i].vy;
-        _b = list_points[i].b;
-        fwrite(&_px, sizeof(double), 1, fw);
-        fwrite(&_py, sizeof(double), 1, fw);
-        fwrite(&_m, sizeof(double), 1, fw);
-        fwrite(&_vx, sizeof(double), 1, fw);
-        fwrite(&_vy, sizeof(double), 1, fw);
-        fwrite(&_b, sizeof(double), 1, fw);
+        _px = px[i];
+        _py = py[i];
+        _m = m[i];
+        _vx = vx[i];
+        _vy = vy[i];
+        _b = b[i];
+
+        int check[6];
+        
+        check[0] = fwrite(&_px, sizeof(double), 1, fw);
+        check[1] = fwrite(&_py, sizeof(double), 1, fw);
+        check[2] = fwrite(&_m, sizeof(double), 1, fw);
+        check[3] = fwrite(&_vx, sizeof(double), 1, fw);
+        check[4] = fwrite(&_vy, sizeof(double), 1, fw);
+        check[5] = fwrite(&_b, sizeof(double), 1, fw);
+
+        if(!(check[0]) | !(check[1]) | !(check[2]) | !(check[3]) | !(check[4]) | !(check[5]))
+        {
+            printf("There's an error writing to file %s\n", filename);
+            fclose(fw);
+            return;
+        }
     }
 
     fclose(fw);
 }
 
-void read_points(char* filename, point list_points[], int N)
+void read_points(char* filename, double* px, double* py, double* m, double* vx, double* vy, double* b, int N)
 {
     FILE* f = fopen(filename, "rb");
 
@@ -187,46 +182,45 @@ void read_points(char* filename, point list_points[], int N)
         return;
     }
 
-    int counter = 0;
-    while(!feof(f))
+    for(int i = 0; i < N; i++)
     {
-        if(counter == N)
-            break;
-        // use an array instead
         double _px, _py, _m, _vx, _vy, _b;
 
-        fread(&_px, sizeof(double), 1, f);
-        fread(&_py, sizeof(double), 1, f);
-        fread(&_m, sizeof(double), 1, f);
-        fread(&_vx, sizeof(double), 1, f);
-        fread(&_vy, sizeof(double), 1, f);
-        fread(&_b, sizeof(double), 1, f);
+        int check[6];
+        check[0] = fread(&_px, sizeof(double), 1, f);
+        check[1] = fread(&_py, sizeof(double), 1, f);
+        check[2] = fread(&_m, sizeof(double), 1, f);
+        check[3] = fread(&_vx, sizeof(double), 1, f);
+        check[4] = fread(&_vy, sizeof(double), 1, f);
+        check[5] = fread(&_b, sizeof(double), 1, f);
 
-        point temp = new_point(_px, _py, _m, _vx, _vy, _b);
+        if(!(check[0]) | !(check[1]) | !(check[2]) | !(check[3]) | !(check[4]) | !(check[5]))
+        {
+            printf("There's an error reading file %s\n", filename);
+            fclose(f);
+            return;
+        }
 
-        list_points[counter] = temp;
-        
-        // printf("%d  | ", counter);
-        // print_point(list_points[counter]);
-
-        counter += 1;
+        px[i] = _px;
+        py[i] = _py;
+        m[i] = _m;
+        vx[i] = _vx;
+        vy[i] = _vy;
+        b[i] = _b;
     }
 
     fclose(f);
 }
 
-void execute(point* list_points, int N, int nsteps, double delta, char* window_title)
+void execute(double* px, double* py, double* m, double* vx, double* vy, double* b, int N, int nsteps, double delta, char* window_title)
 {
     for(int i = 0; i < nsteps; i++)
     {
-        next_time_step(list_points, N, delta);
-        // printf("---\n");
-        // printf("%d\n", i+1  );
-        // print_list_points(list_points, N);
+        next_time_step(px, py, m, vx, vy, N, delta);        
     }
 }
 
-void execute_with_graphics(point* list_points, int N, int nsteps, double delta, char* window_title)
+void execute_with_graphics(double* px, double* py, double* m, double* vx, double* vy, double* b, int N, int nsteps, double delta, char* window_title)
 {
 
     InitializeGraphics(window_title, windowWidth, windowWidth);
@@ -242,24 +236,15 @@ void execute_with_graphics(point* list_points, int N, int nsteps, double delta, 
         ClearScreen();
         for(int i = 0; i < N; i++)
         {
-            DrawCircle(list_points[i].px, list_points[i].py, L, W, circleRadius, circleColor);
+            DrawCircle(px[i], py[i], L, W, circleRadius, circleColor);
         }
         Refresh();
         /* Sleep a short while to avoid screen flickering. */
         usleep(15000);
         
-        next_time_step(list_points, N, delta);
-        // print_list_points(list_points, N);
+        next_time_step(px, py, m, vx, vy, N, delta);
         
         count_steps += 1;
-
-        // printf("----\n");
-        // for(int i = 0; i < N; i++)
-        // {
-        //     printf("%d  | ", i);
-        //     print_point(list_points[i]);
-        // }
-
     }
     
     FlushDisplay();
@@ -287,4 +272,15 @@ void output_filename(char* input, char* output, int nsteps)
     strcat(output, "_after");
     strcat(output, str_nsteps);
     strcat(output, "steps.gal");
+}
+
+
+void display(double* px, double* py, double* m, double* vx, double* vy, double* b, int N, int j)
+{
+    printf("---\n");
+    printf("%d\n", j+1);
+    for(int i = 0; i < N; i++)
+    {
+        printf("%lf    %lf    %lf    %lf    %lf    %lf\n", px[i], py[i], m[i], vx[i], vy[i], b[i]);
+    }
 }
